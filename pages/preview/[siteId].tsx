@@ -1,9 +1,22 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import ModernPortfolio from '@/components/templates/modern-portfolio'
+import dynamic from 'next/dynamic'
 import { Site } from '@/types/site'
+import { TemplateData, ColorScheme, FontScheme } from '@/types/template'
 import { loadSite } from '@/lib/storage/siteStorage'
 import { templates } from '@/config/templates'
+
+// Dynamically import template components
+const ModernPortfolio = dynamic(() => import('@/components/templates/modern-portfolio'))
+const BusinessCard = dynamic(() => import('@/components/templates/business-card'))
+const CreativeResume = dynamic(() => import('@/components/templates/creative-resume'))
+
+// Template component mapping
+const templateComponents: Record<string, React.ComponentType<{ data: TemplateData; colors: ColorScheme; fonts: FontScheme }>> = {
+  'modern-portfolio': ModernPortfolio as any,
+  'business-card': BusinessCard as any,
+  'creative-resume': CreativeResume as any,
+}
 
 export default function PreviewPage() {
   const router = useRouter()
@@ -12,14 +25,17 @@ export default function PreviewPage() {
   const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
-    if (siteId && typeof siteId === 'string') {
-      const loaded = loadSite(siteId)
-      if (loaded) {
-        setSite(loaded)
-      } else {
-        setNotFound(true)
+    const loadSiteData = async () => {
+      if (siteId && typeof siteId === 'string') {
+        const loaded = await loadSite(siteId)
+        if (loaded) {
+          setSite(loaded)
+        } else {
+          setNotFound(true)
+        }
       }
     }
+    loadSiteData()
   }, [siteId])
 
   if (notFound) {
@@ -48,6 +64,7 @@ export default function PreviewPage() {
   }
 
   const template = templates[site.templateId]
+  const TemplateComponent = templateComponents[site.templateId]
 
   return (
     <>
@@ -71,20 +88,17 @@ export default function PreviewPage() {
       )}
 
       {/* Render the template */}
-      {site.templateId === 'modern-portfolio' && (
-        <ModernPortfolio
+      {TemplateComponent ? (
+        <TemplateComponent
           data={site.data}
           colors={site.settings.colors}
           fonts={site.settings.fonts}
         />
-      )}
-
-      {/* Fallback for unknown templates */}
-      {!['modern-portfolio'].includes(site.templateId) && (
+      ) : (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
-              Template "{template?.name || site.templateId}" coming soon!
+              Template "{template?.name || site.templateId}" not found
             </h1>
             <a href={`/editor?siteId=${site.id}`} className="text-indigo-600 hover:underline">
               Edit Site

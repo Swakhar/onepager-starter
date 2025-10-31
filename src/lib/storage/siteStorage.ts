@@ -10,21 +10,38 @@ export async function saveSite(site: Site): Promise<void> {
   // Try Supabase first (if configured)
   if (supabase) {
     try {
+      // Get current user (optional - if using auth)
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      const siteData = user ? { ...site, user_id: user.id } : site
+      
       const { error } = await supabase
         .from('sites')
-        .upsert([site])
+        .upsert([siteData], {
+          onConflict: 'id'
+        })
       
       if (error) throw error
-      console.log('Site saved to Supabase')
+      console.log('✅ Site saved to Supabase')
+      
+      // Also sync to localStorage for offline support
+      syncToLocalStorage(site)
       return
     } catch (err) {
-      console.error('Supabase save failed, falling back to localStorage', err)
+      console.error('❌ Supabase save failed, falling back to localStorage', err)
     }
   }
 
   // Fallback to localStorage
+  syncToLocalStorage(site)
+}
+
+/**
+ * Sync site to localStorage
+ */
+function syncToLocalStorage(site: Site): void {
   if (typeof window !== 'undefined') {
-    const sites = loadAllSites()
+    const sites = loadAllSitesFromLocalStorage()
     const index = sites.findIndex(s => s.id === site.id)
     
     if (index >= 0) {
@@ -34,38 +51,93 @@ export async function saveSite(site: Site): Promise<void> {
     }
     
     localStorage.setItem(LOCAL_KEY, JSON.stringify(sites))
-    console.log('Site saved to localStorage')
+    console.log('✅ Site saved to localStorage')
   }
 }
 
 /**
- * Load a specific site by ID
+ * Load a specific site by ID from Supabase or localStorage
  */
-export function loadSite(id: string): Site | null {
+export async function loadSite(id: string): Promise<Site | null> {
+  // Try Supabase first
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('sites')
+        .select('*')
+        .eq('id', id)
+        .single()
+      
+      if (error) throw error
+      if (data) {
+        console.log('✅ Site loaded from Supabase')
+        return data as Site
+      }
+    } catch (err) {
+      console.error('❌ Supabase load failed, falling back to localStorage', err)
+    }
+  }
+
+  // Fallback to localStorage
   if (typeof window === 'undefined') return null
   
-  const sites = loadAllSites()
+  const sites = loadAllSitesFromLocalStorage()
   return sites.find(s => s.id === id) || null
 }
 
 /**
- * Load all sites from localStorage
+ * Load all sites from Supabase or localStorage
  */
-export function loadAllSites(): Site[] {
+export async function loadAllSites(): Promise<Site[]> {
+  // Try Supabase first
+  if (supabase) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      let query = supabase.from('sites').select('*')
+      
+      // If user is authenticated, filter by user_id
+      if (user) {
+        query = query.eq('user_id', user.id)
+      }
+      
+      const { data, error } = await query.order('updated_at', { ascending: false })
+      
+      if (error) throw error
+      if (data) {
+        console.log('✅ Sites loaded from Supabase:', data.length)
+        return data as Site[]
+      }
+    } catch (err) {
+      console.error('❌ Supabase load failed, falling back to localStorage', err)
+    }
+  }
+
+  // Fallback to localStorage
+  return loadAllSitesFromLocalStorage()
+}
+
+/**
+ * Load all sites from localStorage only
+ */
+function loadAllSitesFromLocalStorage(): Site[] {
   if (typeof window === 'undefined') return []
   
   const raw = localStorage.getItem(LOCAL_KEY)
   if (!raw) return []
   
   try {
-    return JSON.parse(raw) as Site[]
+    const sites = JSON.parse(raw) as Site[]
+    return sites.sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    )
   } catch {
     return []
   }
 }
 
 /**
- * Delete a site
+ * Delete a site from Supabase and localStorage
  */
 export async function deleteSite(id: string): Promise<void> {
   // Try Supabase first
@@ -77,17 +149,29 @@ export async function deleteSite(id: string): Promise<void> {
         .eq('id', id)
       
       if (error) throw error
+      console.log('✅ Site deleted from Supabase')
+      
+      // Also remove from localStorage
+      removeFromLocalStorage(id)
       return
     } catch (err) {
-      console.error('Supabase delete failed, falling back to localStorage', err)
+      console.error('❌ Supabase delete failed, falling back to localStorage', err)
     }
   }
 
   // Fallback to localStorage
+  removeFromLocalStorage(id)
+}
+
+/**
+ * Remove site from localStorage
+ */
+function removeFromLocalStorage(id: string): void {
   if (typeof window !== 'undefined') {
-    const sites = loadAllSites()
+    const sites = loadAllSitesFromLocalStorage()
     const filtered = sites.filter(s => s.id !== id)
     localStorage.setItem(LOCAL_KEY, JSON.stringify(filtered))
+    console.log('✅ Site deleted from localStorage')
   }
 }
 

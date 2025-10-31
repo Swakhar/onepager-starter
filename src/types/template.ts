@@ -42,6 +42,8 @@ export interface TemplateData {
   about?: AboutData
   projects?: ProjectData[]
   skills?: SkillData[]
+  experience?: ExperienceData[]
+  education?: EducationData[]
   contact?: ContactData
   social?: SocialLinks
   [key: string]: any // Allow custom sections
@@ -81,6 +83,28 @@ export interface SkillData {
   level?: number // 0-100
   category?: string
   icon?: string
+}
+
+export interface ExperienceData {
+  id: string
+  title: string
+  company: string
+  location?: string
+  startDate: string
+  endDate?: string // Empty for current position
+  description: string
+  achievements?: string[]
+}
+
+export interface EducationData {
+  id: string
+  degree: string
+  school: string
+  location?: string
+  startDate: string
+  endDate: string
+  description?: string
+  gpa?: string
 }
 
 export interface ContactData {
