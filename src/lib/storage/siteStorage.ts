@@ -13,22 +13,34 @@ export async function saveSite(site: Site): Promise<void> {
       // Get current user (optional - if using auth)
       const { data: { user } } = await supabase.auth.getUser()
       
-      const siteData = user ? { ...site, user_id: user.id } : site
+      // Convert camelCase to snake_case for Supabase
+      const supabaseData = {
+        id: site.id,
+        template_id: site.templateId,
+        title: site.title,
+        slug: site.slug,
+        data: site.data,
+        settings: site.settings,
+        published: site.published,
+        created_at: site.createdAt,
+        updated_at: site.updatedAt,
+        ...(user && { user_id: user.id })
+      }
       
       const { error } = await supabase
         .from('sites')
-        .upsert([siteData], {
+        .upsert([supabaseData], {
           onConflict: 'id'
         })
       
       if (error) throw error
-      console.log('✅ Site saved to Supabase')
+      console.log('✅ Site saved to Supabase:', site.id)
       
       // Also sync to localStorage for offline support
       syncToLocalStorage(site)
       return
-    } catch (err) {
-      console.error('❌ Supabase save failed, falling back to localStorage', err)
+    } catch (err: any) {
+      console.error('❌ Supabase save failed, falling back to localStorage', err.message || err)
     }
   }
 
@@ -70,11 +82,23 @@ export async function loadSite(id: string): Promise<Site | null> {
       
       if (error) throw error
       if (data) {
-        console.log('✅ Site loaded from Supabase')
-        return data as Site
+        console.log('✅ Site loaded from Supabase:', id)
+        // Convert snake_case to camelCase
+        const site: Site = {
+          id: data.id,
+          templateId: data.template_id,
+          title: data.title,
+          slug: data.slug,
+          data: data.data || {},
+          settings: data.settings || {},
+          published: data.published || false,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at
+        }
+        return site
       }
-    } catch (err) {
-      console.error('❌ Supabase load failed, falling back to localStorage', err)
+    } catch (err: any) {
+      console.error('❌ Supabase load failed, falling back to localStorage', err.message || err)
     }
   }
 
@@ -106,10 +130,22 @@ export async function loadAllSites(): Promise<Site[]> {
       if (error) throw error
       if (data) {
         console.log('✅ Sites loaded from Supabase:', data.length)
-        return data as Site[]
+        // Convert snake_case to camelCase
+        const sites: Site[] = data.map((item: any) => ({
+          id: item.id,
+          templateId: item.template_id,
+          title: item.title,
+          slug: item.slug,
+          data: item.data || {},
+          settings: item.settings || {},
+          published: item.published || false,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at
+        }))
+        return sites
       }
-    } catch (err) {
-      console.error('❌ Supabase load failed, falling back to localStorage', err)
+    } catch (err: any) {
+      console.error('❌ Supabase load failed, falling back to localStorage', err.message || err)
     }
   }
 

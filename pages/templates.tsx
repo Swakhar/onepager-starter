@@ -2,6 +2,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Button } from '@/components/ui/Button'
+import { Tooltip } from '@/components/ui/Tooltip'
+import { TemplatePreviewModal } from '@/components/ui/TemplatePreviewModal'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
 import { templates } from '@/config/templates'
 import { modernPortfolioSampleData, businessCardSampleData, creativeResumeSampleData } from '@/config/sampleData'
@@ -12,6 +14,7 @@ export default function TemplatesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreating, setIsCreating] = useState(false)
+  const [previewTemplate, setPreviewTemplate] = useState<string | null>(null)
 
   const categories = Array.from(new Set(Object.values(templates).map(t => t.category)))
   
@@ -43,6 +46,7 @@ export default function TemplatesPage() {
 
   const handleUseTemplate = async (templateId: string, templateName: string) => {
     setIsCreating(true)
+    setPreviewTemplate(null) // Close preview modal
     try {
       const newSite = createNewSite(templateId, `My ${templateName}`)
       newSite.data = getSampleData(templateId)
@@ -55,6 +59,8 @@ export default function TemplatesPage() {
       setIsCreating(false)
     }
   }
+
+  const currentPreviewTemplate = previewTemplate ? templates[previewTemplate] : null
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
@@ -224,14 +230,26 @@ export default function TemplatesPage() {
                     </div>
                   </div>
 
-                  <Button 
-                    onClick={() => handleUseTemplate(template.id, template.name)}
-                    disabled={isCreating}
-                    variant="outline" 
-                    className="w-full group-hover:bg-indigo-50 group-hover:text-indigo-700 group-hover:border-indigo-300 transition-all font-semibold"
-                  >
-                    {isCreating ? 'Creating...' : 'Choose Template →'}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Tooltip content="Preview this template">
+                      <Button 
+                        onClick={() => setPreviewTemplate(template.id)}
+                        variant="outline" 
+                        className="flex-1 group-hover:bg-gray-50 transition-all font-semibold"
+                      >
+                        👁️ Preview
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content="Use this template and start editing">
+                      <Button 
+                        onClick={() => handleUseTemplate(template.id, template.name)}
+                        disabled={isCreating}
+                        className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold"
+                      >
+                        {isCreating ? 'Creating...' : 'Use →'}
+                      </Button>
+                    </Tooltip>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -255,6 +273,35 @@ export default function TemplatesPage() {
           </div>
         </section>
       </main>
+
+      {/* Template Preview Modal */}
+      {currentPreviewTemplate && (
+        <TemplatePreviewModal
+          templateId={previewTemplate!}
+          templateName={currentPreviewTemplate.name}
+          sampleData={getSampleData(previewTemplate!)}
+          colors={{
+            primary: '#6366f1',
+            secondary: '#8b5cf6',
+            accent: '#ec4899',
+            background: '#ffffff',
+            text: '#111827',
+            textSecondary: '#6b7280',
+          }}
+          fonts={{
+            heading: '"Inter", sans-serif',
+            body: '"Inter", sans-serif',
+            headingSizes: {
+              h1: 'text-4xl md:text-5xl lg:text-6xl',
+              h2: 'text-3xl md:text-4xl lg:text-5xl',
+              h3: 'text-2xl md:text-3xl lg:text-4xl',
+            },
+          }}
+          isOpen={!!previewTemplate}
+          onClose={() => setPreviewTemplate(null)}
+          onUseTemplate={() => handleUseTemplate(previewTemplate!, currentPreviewTemplate.name)}
+        />
+      )}
     </div>
   )
 }
