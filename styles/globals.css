@@ -59,3 +59,119 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
+/* Editor Dark Theme Text Overrides */
+.editor-panel label,
+.editor-panel h1,
+.editor-panel h2,
+.editor-panel h3,
+.editor-panel h4,
+.editor-panel h5,
+.editor-panel h6 {
+  @apply text-white;
+}
+
+.editor-panel p,
+.editor-panel span:not(.text-green-400):not(.text-red-600):not(.text-blue-700):not(.text-purple-700):not(.text-indigo-700) {
+  @apply text-gray-300;
+}
+
+.editor-panel input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+.editor-panel textarea,
+.editor-panel select {
+  @apply bg-[#0f0f0f] border-gray-700 text-white placeholder:text-gray-500;
+}
+
+.editor-panel input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):focus,
+.editor-panel textarea:focus,
+.editor-panel select:focus {
+  @apply ring-indigo-500 border-indigo-500;
+}
+
+.editor-panel button:not(.bg-gradient-to-r):not(.bg-green-100):not(.bg-blue-100):not(.bg-purple-100):not(.bg-red-100) {
+  @apply text-white;
+}
+
+/* Override specific color classes in editor */
+.editor-panel .text-gray-900,
+.editor-panel .text-gray-800,
+.editor-panel .text-gray-700,
+.editor-panel .text-gray-600 {
+  color: #d1d5db !important; /* gray-300 */
+}
+
+.editor-panel .text-gray-500 {
+  color: #9ca3af !important; /* gray-400 */
+}
+
+/* Dark backgrounds in editor */
+.editor-panel .bg-gray-50,
+.editor-panel .bg-gray-100 {
+  @apply bg-[#0f0f0f];
+}
+
+.editor-panel .bg-white:not(.bg-gradient-to-r):not(.bg-gradient-to-br) {
+  @apply bg-[#1a1a1a];
+}
+
+/* Dark borders in editor */
+.editor-panel .border-gray-200,
+.editor-panel .border-gray-300 {
+  @apply border-gray-800;
+}
+
+/* Override all text colors in editor */
+.editor-panel .text-gray-900 {
+  color: white !important;
+}
+
+.editor-panel .text-gray-800,
+.editor-panel .text-gray-700,
+.editor-panel .text-gray-600 {
+  color: #d1d5db !important; /* gray-300 */
+}
+
+.editor-panel .text-gray-500 {
+  color: #9ca3af !important; /* gray-400 */
+}
+
+/* Section navigation fix */
+.editor-panel .bg-gray-100 {
+  background-color: #0f0f0f !important;
+}
+
+.editor-panel button.bg-white {
+  background-color: #1e293b !important; /* slate-800 */
+  color: white !important;
+}
+
+.editor-panel button.text-gray-600 {
+  color: #9ca3af !important; /* gray-400 */
+}
+
+.editor-panel button.hover\:text-gray-900:hover {
+  color: white !important;
+}
+
+.editor-panel .text-blue-600 {
+  color: #818cf8 !important; /* indigo-400 */
+}
+
+/* Card components in editor */
+.editor-panel .font-medium.text-gray-900,
+.editor-panel .font-semibold.text-gray-900,
+.editor-panel .font-bold.text-gray-900 {
+  color: white !important;
+}
+
+/* Progress bars and backgrounds */
+.editor-panel .bg-gray-200 {
+  background-color: #374151 !important; /* gray-700 */
+}
+
+/* Ensure all text is visible */
+.editor-panel * {
+  transition: color 0.2s ease;
+}
+
+
+

@@ -23,12 +23,20 @@ export default function PreviewPage() {
   const { siteId } = router.query
   const [site, setSite] = useState<Site | null>(null)
   const [notFound, setNotFound] = useState(false)
+  const [unauthorized, setUnauthorized] = useState(false)
 
   useEffect(() => {
     const loadSiteData = async () => {
       if (siteId && typeof siteId === 'string') {
         const loaded = await loadSite(siteId)
         if (loaded) {
+          // Check if site is published
+          if (!loaded.published) {
+            setUnauthorized(true)
+            // Redirect after showing message
+            setTimeout(() => router.push('/'), 2000)
+            return
+          }
           setSite(loaded)
         } else {
           setNotFound(true)
@@ -36,15 +44,33 @@ export default function PreviewPage() {
       }
     }
     loadSiteData()
-  }, [siteId])
+  }, [siteId, router])
+
+  if (unauthorized) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center">
+        <div className="text-center bg-white p-12 rounded-2xl shadow-2xl max-w-md">
+          <div className="text-6xl mb-4">🔒</div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Unauthorized</h1>
+          <p className="text-gray-600 mb-2">
+            This site is not published yet.
+          </p>
+          <p className="text-sm text-gray-500">
+            Redirecting to home page...
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   if (notFound) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Site Not Found</h1>
+        <div className="text-center bg-white p-12 rounded-2xl shadow-2xl max-w-md">
+          <div className="text-6xl mb-4">🔍</div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Site Not Found</h1>
           <p className="text-gray-600 mb-8">The site you're looking for doesn't exist.</p>
-          <a href="/dashboard" className="text-indigo-600 hover:underline">
+          <a href="/dashboard" className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
             Go to Dashboard
           </a>
         </div>

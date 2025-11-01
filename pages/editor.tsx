@@ -8,6 +8,11 @@ import { ShortcutsModal, ShortcutsButton } from '@/components/ui/ShortcutsModal'
 import { OnboardingTour, useOnboardingTour } from '@/components/ui/OnboardingTour'
 import { DesignPanel } from '@/components/editor/panels/DesignPanel'
 import { ContentPanel } from '@/components/editor/panels/ContentPanel'
+import { SettingsPanel } from '@/components/editor/panels/SettingsPanel'
+import { SEOPanel } from '@/components/editor/panels/SEOPanel'
+import { ExportButtons } from '@/components/editor/ExportButtons'
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
+import { useAuth } from '@/contexts/AuthContext'
 import { Site } from '@/types/site'
 import { TemplateData, ColorScheme, FontScheme } from '@/types/template'
 import { templates } from '@/config/templates'
@@ -21,7 +26,7 @@ const ModernPortfolio = dynamic(() => import('@/components/templates/modern-port
 const BusinessCard = dynamic(() => import('@/components/templates/business-card'))
 const CreativeResume = dynamic(() => import('@/components/templates/creative-resume'))
 
-type EditorTab = 'content' | 'design' | 'settings'
+type EditorTab = 'content' | 'design' | 'settings' | 'seo'
 
 // Template component mapping
 const templateComponents: Record<string, React.ComponentType<{ data: TemplateData; colors: ColorScheme; fonts: FontScheme }>> = {
@@ -40,6 +45,7 @@ export default function EditorPage() {
   const [deviceView, setDeviceView] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showSuccessToast, setShowSuccessToast] = useState(false)
+  const [showMobilePanel, setShowMobilePanel] = useState(false)
 
   // History store for undo/redo
   const { setPresent, undo, redo, canUndo, canRedo } = useHistoryStore()
@@ -195,300 +201,340 @@ export default function EditorPage() {
 
   if (!site) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading editor...</p>
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading editor...</p>
+          </div>
         </div>
-      </div>
+      </ProtectedRoute>
     )
   }
 
   const template = templates[site.templateId]
 
   return (
-    <>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
         {/* Success Toast */}
         {showSuccessToast && (
-          <div className="fixed top-6 right-6 z-50 bg-green-500 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 animate-fadeIn">
+          <div className="fixed top-6 right-6 z-[100] bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 animate-fadeIn border border-green-400/30">
             <span className="text-2xl">✅</span>
             <div>
               <p className="font-semibold">Success!</p>
-              <p className="text-sm text-green-100">Your changes have been saved</p>
+              <p className="text-sm text-green-50">Your changes have been saved</p>
             </div>
           </div>
         )}
 
-        {/* Editor Toolbar */}
-        <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-lg">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Tooltip content="Back to Dashboard">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => router.push('/dashboard')}
-                    className="hover:bg-gray-100"
-                  >
-                    ← Back
-                  </Button>
-                </Tooltip>
-                <div className="border-l border-gray-300 pl-4">
-                  <h1 className="text-lg font-bold text-gray-900">{site.title}</h1>
-                  <p className="text-sm text-gray-500 flex items-center gap-2">
-                    {template?.name || 'Template'} 
-                    <span className="text-gray-300">•</span>
-                    {site.published ? (
-                      <span className="inline-flex items-center gap-1 text-green-600 font-medium">
-                        <span className="w-2 h-2 bg-green-600 rounded-full"></span>
-                        Published
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-gray-500">
-                        <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-                        Draft
-                      </span>
-                    )}
-                  </p>
+        {/* Top Navigation Bar */}
+        <div className="h-14 bg-[#1a1a1a] border-b border-gray-800 flex items-center px-4 gap-4 shrink-0">
+          {/* Left Section */}
+          <div className="flex items-center gap-3">
+            <Tooltip content="Back to Dashboard">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors text-gray-400 hover:text-white"
+              >
+                <span className="text-lg">←</span>
+                <span className="text-sm font-medium hidden sm:inline">Back</span>
+              </button>
+            </Tooltip>
+            
+            <div className="h-6 w-px bg-gray-800" />
+            
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col">
+                <h1 className="text-sm font-semibold text-white leading-tight">{site.title}</h1>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span className="hidden sm:inline">{template?.name || 'Template'}</span>
+                  <span className="hidden sm:inline">•</span>
+                  {site.published ? (
+                    <span className="inline-flex items-center gap-1 text-green-400">
+                      <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                      Live
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-gray-500">
+                      <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
+                      Draft
+                    </span>
+                  )}
                 </div>
-              </div>
-              
-              <div className="flex items-center gap-3" data-tour="save">
-                {/* Undo/Redo */}
-                <div className="flex items-center gap-1 border-r border-gray-300 pr-3">
-                  <Tooltip content="Undo (⌘Z)">
-                    <button
-                      onClick={handleUndo}
-                      disabled={!canUndo}
-                      className={`p-2 rounded-lg transition-all ${
-                        canUndo
-                          ? 'hover:bg-gray-100 text-gray-700'
-                          : 'text-gray-300 cursor-not-allowed'
-                      }`}
-                    >
-                      <span className="text-xl">↶</span>
-                    </button>
-                  </Tooltip>
-                  <Tooltip content="Redo (⌘⇧Z)">
-                    <button
-                      onClick={handleRedo}
-                      disabled={!canRedo}
-                      className={`p-2 rounded-lg transition-all ${
-                        canRedo
-                          ? 'hover:bg-gray-100 text-gray-700'
-                          : 'text-gray-300 cursor-not-allowed'
-                      }`}
-                    >
-                      <span className="text-xl">↷</span>
-                    </button>
-                  </Tooltip>
-                </div>
-
-                <Tooltip content="Save changes (⌘S)">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="border-2 hover:bg-gray-50 font-semibold"
-                  >
-                    {isSaving ? 'Saving...' : '💾 Save'}
-                  </Button>
-                </Tooltip>
-                <Tooltip content="Publish your site (⌘P)">
-                  <Button
-                    size="sm"
-                    onClick={handlePublish}
-                    disabled={isSaving}
-                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg font-semibold"
-                  >
-                    {site.published ? '🚀 Update' : '🚀 Publish'}
-                  </Button>
-                </Tooltip>
               </div>
             </div>
           </div>
+
+          {/* Center Section - Editor Tabs */}
+          <div className="flex-1 flex justify-center">
+            <div className="hidden md:flex items-center gap-1 bg-[#0f0f0f] rounded-lg p-1 border border-gray-800" data-tour="tabs">
+              {[
+                { id: 'content', label: 'Content', icon: '📝' },
+                { id: 'design', label: 'Design', icon: '🎨' },
+                { id: 'settings', label: 'Settings', icon: '⚙️' },
+                { id: 'seo', label: 'SEO', icon: '🚀' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as EditorTab)}
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  <span className="text-base">{tab.icon}</span>
+                  <span className="hidden md:inline">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+            
+            {/* Mobile: Panel Toggle Button */}
+            <button
+              onClick={() => setShowMobilePanel(!showMobilePanel)}
+              className="md:hidden flex items-center gap-2 px-4 py-2 bg-[#0f0f0f] rounded-lg border border-gray-800 text-white"
+            >
+              <span className="text-base">
+                {activeTab === 'content' && '📝'}
+                {activeTab === 'design' && '🎨'}
+                {activeTab === 'settings' && '⚙️'}
+                {activeTab === 'seo' && '🚀'}
+              </span>
+              <span className="text-sm font-medium">
+                {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+              </span>
+              <span className="text-xs">{showMobilePanel ? '✕' : '▼'}</span>
+            </button>
+          </div>
+
+          {/* Right Section - Actions */}
+          <div className="flex items-center gap-2" data-tour="save">
+            {/* Undo/Redo */}
+            <div className="hidden md:flex items-center gap-1 border-r border-gray-800 pr-2">
+              <Tooltip content="Undo (⌘Z)">
+                <button
+                  onClick={handleUndo}
+                  disabled={!canUndo}
+                  className={`p-2 rounded-lg transition-all ${
+                    canUndo
+                      ? 'hover:bg-gray-800 text-gray-400 hover:text-white'
+                      : 'text-gray-700 cursor-not-allowed'
+                  }`}
+                >
+                  <span className="text-lg">↶</span>
+                </button>
+              </Tooltip>
+              <Tooltip content="Redo (⌘⇧Z)">
+                <button
+                  onClick={handleRedo}
+                  disabled={!canRedo}
+                  className={`p-2 rounded-lg transition-all ${
+                    canRedo
+                      ? 'hover:bg-gray-800 text-gray-400 hover:text-white'
+                      : 'text-gray-700 cursor-not-allowed'
+                  }`}
+                >
+                  <span className="text-lg">↷</span>
+                </button>
+              </Tooltip>
+            </div>
+
+            {/* Device View Switcher */}
+            <div className="hidden lg:flex items-center gap-1 bg-[#0f0f0f] rounded-lg p-1 border border-gray-800">
+              {[
+                { id: 'desktop', icon: '🖥️', label: 'Desktop' },
+                { id: 'tablet', icon: '📱', label: 'Tablet' },
+                { id: 'mobile', icon: '�', label: 'Mobile' },
+              ].map((device) => (
+                <Tooltip key={device.id} content={device.label}>
+                  <button
+                    onClick={() => setDeviceView(device.id as any)}
+                    className={`px-3 py-1.5 rounded-md text-sm transition-all ${
+                      deviceView === device.id
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    {device.icon}
+                  </button>
+                </Tooltip>
+              ))}
+            </div>
+
+            <div className="h-6 w-px bg-gray-800" />
+
+            {/* Export Buttons */}
+            <div className="hidden md:block">
+              <ExportButtons site={site} previewElementId="site-preview" />
+            </div>
+
+            <Tooltip content="Save changes (⌘S)">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="border-gray-700 bg-transparent hover:bg-gray-800 text-white font-medium"
+              >
+                <span className="hidden sm:inline">{isSaving ? 'Saving...' : '💾 Save'}</span>
+                <span className="sm:hidden">💾</span>
+              </Button>
+            </Tooltip>
+            
+            <Tooltip content="Publish your site (⌘P)">
+              <Button
+                size="sm"
+                onClick={handlePublish}
+                disabled={isSaving}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg font-medium border-0"
+              >
+                <span className="hidden sm:inline">{site.published ? '🚀 Update' : '🚀 Publish'}</span>
+                <span className="sm:hidden">🚀</span>
+              </Button>
+            </Tooltip>
+          </div>
         </div>
 
-      {/* Editor Content */}
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="grid lg:grid-cols-4 gap-6">
-          {/* Sidebar - Editor Panel */}
-          <aside className="lg:col-span-1">
-            <div className="sticky top-28 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden" data-tour="tabs">
-              {/* Tabs */}
-              <Tabs
-                tabs={[
-                  { id: 'content', label: '📝 Content' },
-                  { id: 'design', label: '🎨 Design' },
-                  { id: 'settings', label: '⚙️ Settings' },
-                ]}
-                activeTab={activeTab}
-                onChange={(tabId) => setActiveTab(tabId as EditorTab)}
-              />
-
-              {/* Tab Content */}
-              <div className="p-6 max-h-[calc(100vh-250px)] overflow-y-auto" data-tour="content">
-                {activeTab === 'content' && (
-                  <ContentPanel
-                    data={site.data}
-                    onDataChange={(newData: TemplateData) => setSite({ ...site, data: newData })}
-                  />
-                )}
-
-                {activeTab === 'design' && (
-                  <DesignPanel
-                    colors={site.settings.colors}
-                    fonts={site.settings.fonts}
-                    onColorsChange={(colors) => 
-                      setSite({ ...site, settings: { ...site.settings, colors } })
-                    }
-                    onFontsChange={(fonts) =>
-                      setSite({ ...site, settings: { ...site.settings, fonts } })
-                    }
-                  />
-                )}
-
-                {activeTab === 'settings' && (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Site Title
-                      </label>
-                      <input
-                        type="text"
-                        value={site.title}
-                        onChange={(e) => setSite({ ...site, title: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        URL Slug
-                      </label>
-                      <input
-                        type="text"
-                        value={site.slug}
-                        onChange={(e) => setSite({ ...site, slug: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        yoursite.com/{site.slug}
-                      </p>
-                    </div>
-
-                    <div className="pt-4 border-t">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        SEO Title
-                      </label>
-                      <input
-                        type="text"
-                        value={site.settings.seo?.title || ''}
-                        onChange={(e) => setSite({ 
-                          ...site, 
-                          settings: { 
-                            ...site.settings, 
-                            seo: { ...site.settings.seo, title: e.target.value } 
-                          } 
-                        })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        SEO Description
-                      </label>
-                      <textarea
-                        value={site.settings.seo?.description || ''}
-                        onChange={(e) => setSite({ 
-                          ...site, 
-                          settings: { 
-                            ...site.settings, 
-                            seo: { ...site.settings.seo, description: e.target.value } 
-                          } 
-                        })}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                )}
+        {/* Editor Content */}
+        <div className="flex-1 flex overflow-hidden relative">
+          {/* Side Panel - Desktop always visible, Mobile overlay */}
+          <div 
+            className={`
+              bg-[#1a1a1a] border-r border-gray-800 overflow-y-auto
+              md:w-80 lg:w-96 md:relative md:flex-shrink-0
+              ${showMobilePanel 
+                ? 'fixed inset-0 top-14 z-50 w-full' 
+                : 'hidden md:block'
+              }
+            `}
+            data-tour="content"
+          >
+            {/* Mobile: Tab Selector */}
+            {showMobilePanel && (
+              <div className="md:hidden sticky top-0 bg-[#1a1a1a] border-b border-gray-800 p-4 z-10">
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { id: 'content', label: 'Content', icon: '📝' },
+                    { id: 'design', label: 'Design', icon: '🎨' },
+                    { id: 'settings', label: 'Settings', icon: '⚙️' },
+                    { id: 'seo', label: 'SEO', icon: '🚀' },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as EditorTab)}
+                      className={`flex flex-col items-center gap-1 p-3 rounded-lg text-xs font-medium transition-all ${
+                        activeTab === tab.id
+                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'
+                          : 'bg-[#0f0f0f] text-gray-400'
+                      }`}
+                    >
+                      <span className="text-xl">{tab.icon}</span>
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
+            )}
+            
+            <div className="p-6 space-y-6 editor-panel">
+              {activeTab === 'content' && (
+                <ContentPanel
+                  data={site.data}
+                  onDataChange={(newData: TemplateData) => setSite({ ...site, data: newData })}
+                />
+              )}
+
+              {activeTab === 'design' && (
+                <DesignPanel
+                  colors={site.settings.colors}
+                  fonts={site.settings.fonts}
+                  onColorsChange={(colors) => 
+                    setSite({ ...site, settings: { ...site.settings, colors } })
+                  }
+                  onFontsChange={(fonts) =>
+                    setSite({ ...site, settings: { ...site.settings, fonts } })
+                  }
+                />
+              )}
+
+              {activeTab === 'settings' && (
+                <SettingsPanel
+                  site={site}
+                  onUpdate={(updates: Partial<Site>) => setSite({ ...site, ...updates })}
+                />
+              )}
+
+              {activeTab === 'seo' && (
+                <SEOPanel 
+                  site={site}
+                  onUpdate={(updates: Partial<Site>) => setSite({ ...site, ...updates })}
+                />
+              )}
             </div>
-          </aside>
+            
+            {/* Mobile: Close Button */}
+            {showMobilePanel && (
+              <div className="md:hidden sticky bottom-0 bg-[#1a1a1a] border-t border-gray-800 p-4">
+                <button
+                  onClick={() => setShowMobilePanel(false)}
+                  className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium"
+                >
+                  Done Editing
+                </button>
+              </div>
+            )}
+          </div>
 
-          {/* Main - Live Preview */}
-          <main className="lg:col-span-3" data-tour="preview">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-              {/* Browser Chrome */}
-              <div className="bg-gradient-to-r from-gray-100 to-gray-200 px-6 py-4 border-b border-gray-300 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 transition-colors"></div>
-                    <div className="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors"></div>
-                    <div className="w-3 h-3 rounded-full bg-green-500 hover:bg-green-600 transition-colors"></div>
-                  </div>
-                  <div className="text-center px-4">
-                    <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                      <span>👁️</span> Live Preview
-                    </p>
-                  </div>
+          {/* Main Preview Area */}
+          <div className="flex-1 flex flex-col overflow-hidden" data-tour="preview">
+            {/* Preview Toolbar */}
+            <div className="h-12 bg-[#141414] border-b border-gray-800 flex items-center justify-between px-4 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-500/80 hover:bg-red-500 transition-colors"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/80 hover:bg-yellow-500 transition-colors"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500/80 hover:bg-green-500 transition-colors"></div>
                 </div>
-
-                {/* Device View Switcher */}
-                <div className="flex gap-1 bg-white rounded-lg p-1 shadow-inner">
-                  <button
-                    onClick={() => setDeviceView('desktop')}
-                    className={`px-4 py-2 text-xs font-semibold rounded transition-all ${
-                      deviceView === 'desktop'
-                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    🖥️ Desktop
-                  </button>
-                  <button
-                    onClick={() => setDeviceView('tablet')}
-                    className={`px-4 py-2 text-xs font-semibold rounded transition-all ${
-                      deviceView === 'tablet'
-                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    📱 Tablet
-                  </button>
-                  <button
-                    onClick={() => setDeviceView('mobile')}
-                    className={`px-4 py-2 text-xs font-semibold rounded transition-all ${
-                      deviceView === 'mobile'
-                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    📱 Mobile
-                  </button>
-                </div>
+                <span className="text-xs text-gray-500 ml-2">👁️ Live Preview</span>
               </div>
               
-              {/* Preview */}
-              <div className="flex justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-8 min-h-[700px]">
+              {/* Mobile Device Switcher */}
+              <div className="lg:hidden flex gap-1 bg-[#0f0f0f] rounded-lg p-1 border border-gray-800">
+                {['desktop', 'tablet', 'mobile'].map((device) => (
+                  <button
+                    key={device}
+                    onClick={() => setDeviceView(device as any)}
+                    className={`px-2 py-1 rounded text-xs ${
+                      deviceView === device
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-gray-400'
+                    }`}
+                  >
+                    {device === 'desktop' ? '🖥️' : '📱'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Preview Content */}
+            <div className="flex-1 overflow-auto bg-[#0f0f0f] p-4 sm:p-8">
+              <div className="flex justify-center items-start min-h-full">
                 <div 
+                  id="site-preview"
                   className={`bg-white transition-all duration-500 ease-in-out ${
                     deviceView === 'mobile' 
-                      ? 'w-[375px] max-h-[667px]' 
+                      ? 'w-[375px]' 
                       : deviceView === 'tablet'
-                      ? 'w-[768px] max-h-[1024px]'
-                      : 'w-full max-h-none'
+                      ? 'w-[768px]'
+                      : 'w-full max-w-7xl'
                   }`}
                   style={{ 
-                    boxShadow: deviceView !== 'desktop' ? '0 20px 60px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.1)' : 'none',
-                    borderRadius: deviceView !== 'desktop' ? '20px' : '0',
-                    overflow: 'auto',
-                    scrollbarWidth: 'thin',
+                    boxShadow: deviceView !== 'desktop' 
+                      ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)' 
+                      : '0 10px 30px rgba(0, 0, 0, 0.3)',
+                    borderRadius: deviceView !== 'desktop' ? '24px' : '8px',
+                    overflow: 'hidden',
                   }}
                 >
                   {(() => {
@@ -502,21 +548,18 @@ export default function EditorPage() {
                       )
                     }
                     return (
-                      <div className={`${deviceView !== 'desktop' ? 'min-h-full' : ''}`}>
-                        <TemplateComponent
-                          data={site.data}
-                          colors={site.settings.colors}
-                          fonts={site.settings.fonts}
-                        />
-                      </div>
+                      <TemplateComponent
+                        data={site.data}
+                        colors={site.settings.colors}
+                        fonts={site.settings.fonts}
+                      />
                     )
                   })()}
                 </div>
               </div>
             </div>
-          </main>
+          </div>
         </div>
-      </div>
       </div>
 
       {/* Keyboard Shortcuts */}
@@ -533,6 +576,6 @@ export default function EditorPage() {
         isActive={isTourActive}
         onComplete={completeTour}
       />
-    </>
+    </ProtectedRoute>
   )
 }
