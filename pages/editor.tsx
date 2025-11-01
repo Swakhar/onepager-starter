@@ -6,6 +6,7 @@ import { Tabs } from '@/components/ui/Tabs'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { ShortcutsModal, ShortcutsButton } from '@/components/ui/ShortcutsModal'
 import { OnboardingTour, useOnboardingTour } from '@/components/ui/OnboardingTour'
+import { PublishModal } from '@/components/ui/PublishModal'
 import { DesignPanel } from '@/components/editor/panels/DesignPanel'
 import { ContentPanel } from '@/components/editor/panels/ContentPanel'
 import { SettingsPanel } from '@/components/editor/panels/SettingsPanel'
@@ -46,6 +47,7 @@ export default function EditorPage() {
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showSuccessToast, setShowSuccessToast] = useState(false)
   const [showMobilePanel, setShowMobilePanel] = useState(false)
+  const [showPublishModal, setShowPublishModal] = useState(false)
 
   // History store for undo/redo
   const { setPresent, undo, redo, canUndo, canRedo } = useHistoryStore()
@@ -178,7 +180,7 @@ export default function EditorPage() {
     }
   }
 
-  const handlePublish = async () => {
+  const handlePublish = async (withDomain?: string) => {
     if (!site) return
     
     setIsSaving(true)
@@ -186,17 +188,41 @@ export default function EditorPage() {
       await saveSite({
         ...site,
         published: true,
+        customDomain: withDomain || site.customDomain,
         updatedAt: new Date().toISOString(),
       })
       setShowSuccessToast(true)
       setTimeout(() => setShowSuccessToast(false), 3000)
-      setSite({ ...site, published: true })
+      setSite({ ...site, published: true, customDomain: withDomain || site.customDomain })
     } catch (error) {
       console.error('Failed to publish site:', error)
       alert('Failed to publish site')
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const handleOpenPublishModal = () => {
+    if (!site) return
+    
+    // If already published, just toggle publish status
+    if (site.published) {
+      handlePublish()
+    } else {
+      // Show modal for first-time publishing
+      setShowPublishModal(true)
+    }
+  }
+
+  const handleOpenDomainSearchFromPublish = () => {
+    setShowPublishModal(false)
+    setActiveTab('settings')
+    setShowMobilePanel(true)
+    // Trigger domain search in settings
+    setTimeout(() => {
+      const domainButton = document.querySelector('[data-domain-search]') as HTMLButtonElement
+      domainButton?.click()
+    }, 300)
   }
 
   if (!site) {
@@ -366,7 +392,7 @@ export default function EditorPage() {
 
             {/* Export Buttons */}
             <div className="hidden md:block">
-              <ExportButtons site={site} previewElementId="site-preview" />
+              <ExportButtons site={site} />
             </div>
 
             <Tooltip content="Save changes (⌘S)">
@@ -385,7 +411,7 @@ export default function EditorPage() {
             <Tooltip content="Publish your site (⌘P)">
               <Button
                 size="sm"
-                onClick={handlePublish}
+                onClick={handleOpenPublishModal}
                 disabled={isSaving}
                 className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg font-medium border-0"
               >
@@ -568,6 +594,15 @@ export default function EditorPage() {
         shortcuts={shortcuts}
         isOpen={showShortcuts}
         onClose={() => setShowShortcuts(false)}
+      />
+
+      {/* Publish Modal */}
+      <PublishModal
+        isOpen={showPublishModal}
+        onClose={() => setShowPublishModal(false)}
+        site={site}
+        onPublish={handlePublish}
+        onOpenDomainSearch={handleOpenDomainSearchFromPublish}
       />
 
       {/* Onboarding Tour */}

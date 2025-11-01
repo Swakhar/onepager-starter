@@ -147,21 +147,21 @@ export default function DomainSearch({ currentDomain, onConnect }: DomainSearchP
                       : 'bg-[#0f0f0f] border-gray-700 opacity-60'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
                         result.available ? 'bg-green-500' : 'bg-red-500'
                       }`} />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-white font-medium">{result.domain}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-white font-medium break-all">{result.domain}</span>
                           {result.suggested && (
-                            <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded-full">
+                            <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded-full whitespace-nowrap">
                               Suggested
                             </span>
                           )}
                           {result.premium && (
-                            <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">
+                            <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded-full whitespace-nowrap">
                               ⭐ Premium
                             </span>
                           )}
@@ -171,13 +171,13 @@ export default function DomainSearch({ currentDomain, onConnect }: DomainSearchP
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-white font-semibold">{result.price}/yr</span>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className="text-white font-semibold whitespace-nowrap">{result.price}/yr</span>
                       {result.available && (
                         <Button
                           onClick={() => onConnect(result.domain)}
                           size="sm"
-                          className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                          className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 whitespace-nowrap"
                         >
                           Connect
                         </Button>
@@ -189,25 +189,6 @@ export default function DomainSearch({ currentDomain, onConnect }: DomainSearchP
             </div>
           </div>
         )}
-
-        {/* Features */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-gray-800">
-          <div className="p-4 bg-[#0f0f0f] rounded-lg">
-            <div className="text-2xl mb-2">🔒</div>
-            <h4 className="font-semibold text-white mb-1">Free SSL</h4>
-            <p className="text-sm text-gray-400">Automatic HTTPS encryption included</p>
-          </div>
-          <div className="p-4 bg-[#0f0f0f] rounded-lg">
-            <div className="text-2xl mb-2">⚡</div>
-            <h4 className="font-semibold text-white mb-1">Fast DNS</h4>
-            <p className="text-sm text-gray-400">Global DNS propagation in minutes</p>
-          </div>
-          <div className="p-4 bg-[#0f0f0f] rounded-lg">
-            <div className="text-2xl mb-2">📧</div>
-            <h4 className="font-semibold text-white mb-1">Email Forwarding</h4>
-            <p className="text-sm text-gray-400">Forward emails to your inbox</p>
-          </div>
-        </div>
 
         {/* Already have a domain */}
         <div className="p-4 bg-[#0f0f0f] border border-gray-700 rounded-lg">
