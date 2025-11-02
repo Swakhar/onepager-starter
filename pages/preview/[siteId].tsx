@@ -1,10 +1,12 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
+import Head from 'next/head'
 import { Site } from '@/types/site'
 import { TemplateData, ColorScheme, FontScheme } from '@/types/template'
 import { loadSite } from '@/lib/storage/siteStorage'
 import { templates } from '@/config/templates'
+import { initAnalytics } from '@/lib/analytics/tracker'
 
 // Dynamically import template components
 const ModernPortfolio = dynamic(() => import('@/components/templates/modern-portfolio'))
@@ -38,6 +40,12 @@ export default function PreviewPage() {
             return
           }
           setSite(loaded)
+          
+          // Initialize analytics tracking for published sites
+          if (loaded.published && loaded.id) {
+            console.log('[Preview] Initializing analytics for site:', loaded.id)
+            initAnalytics(loaded.id)
+          }
         } else {
           setNotFound(true)
         }
@@ -94,6 +102,31 @@ export default function PreviewPage() {
 
   return (
     <>
+      {/* SEO Meta Tags */}
+      <Head>
+        <title>{site.title || 'OnePager Site'}</title>
+        <meta name="description" content={site.settings.seo.description || 'Created with OnePager'} />
+        <meta name="keywords" content={Array.isArray(site.settings.seo.keywords) ? site.settings.seo.keywords.join(', ') : (site.settings.seo.keywords || '')} />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content={site.settings.seo.title || site.title} />
+        <meta property="og:description" content={site.settings.seo.description || 'Created with OnePager'} />
+        {site.settings.seo.ogImage && <meta property="og:image" content={site.settings.seo.ogImage} />}
+        <meta property="og:type" content="website" />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={site.settings.seo.title || site.title} />
+        <meta name="twitter:description" content={site.settings.seo.description || 'Created with OnePager'} />
+        {site.settings.seo.ogImage && <meta name="twitter:image" content={site.settings.seo.ogImage} />}
+        
+        {/* Favicon */}
+        {site.settings.seo.favicon && <link rel="icon" href={site.settings.seo.favicon} />}
+        
+        {/* Custom Domain Hint */}
+        {site.customDomain && <link rel="canonical" href={`https://${site.customDomain}`} />}
+      </Head>
+
       {/* Preview Banner (only shown when not published) */}
       {!site.published && (
         <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-3">

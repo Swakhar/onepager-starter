@@ -11,6 +11,7 @@ import { DesignPanel } from '@/components/editor/panels/DesignPanel'
 import { ContentPanel } from '@/components/editor/panels/ContentPanel'
 import { SettingsPanel } from '@/components/editor/panels/SettingsPanel'
 import { SEOPanel } from '@/components/editor/panels/SEOPanel'
+import { AnalyticsPanel } from '@/components/editor/panels/AnalyticsPanel'
 import { ExportButtons } from '@/components/editor/ExportButtons'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
@@ -27,7 +28,7 @@ const ModernPortfolio = dynamic(() => import('@/components/templates/modern-port
 const BusinessCard = dynamic(() => import('@/components/templates/business-card'))
 const CreativeResume = dynamic(() => import('@/components/templates/creative-resume'))
 
-type EditorTab = 'content' | 'design' | 'settings' | 'seo'
+type EditorTab = 'content' | 'design' | 'settings' | 'seo' | 'analytics'
 
 // Template component mapping
 const templateComponents: Record<string, React.ComponentType<{ data: TemplateData; colors: ColorScheme; fonts: FontScheme }>> = {
@@ -300,6 +301,7 @@ export default function EditorPage() {
                 { id: 'design', label: 'Design', icon: '🎨' },
                 { id: 'settings', label: 'Settings', icon: '⚙️' },
                 { id: 'seo', label: 'SEO', icon: '🚀' },
+                { id: 'analytics', label: 'Analytics', icon: '📊' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -326,6 +328,7 @@ export default function EditorPage() {
                 {activeTab === 'design' && '🎨'}
                 {activeTab === 'settings' && '⚙️'}
                 {activeTab === 'seo' && '🚀'}
+                {activeTab === 'analytics' && '📊'}
               </span>
               <span className="text-sm font-medium">
                 {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
@@ -439,12 +442,13 @@ export default function EditorPage() {
             {/* Mobile: Tab Selector */}
             {showMobilePanel && (
               <div className="md:hidden sticky top-0 bg-[#1a1a1a] border-b border-gray-800 p-4 z-10">
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-5 gap-2">
                   {[
                     { id: 'content', label: 'Content', icon: '📝' },
                     { id: 'design', label: 'Design', icon: '🎨' },
                     { id: 'settings', label: 'Settings', icon: '⚙️' },
                     { id: 'seo', label: 'SEO', icon: '🚀' },
+                    { id: 'analytics', label: 'Analytics', icon: '📊' },
                   ].map((tab) => (
                     <button
                       key={tab.id}
@@ -493,6 +497,13 @@ export default function EditorPage() {
 
               {activeTab === 'seo' && (
                 <SEOPanel 
+                  site={site}
+                  onUpdate={(updates: Partial<Site>) => setSite({ ...site, ...updates })}
+                />
+              )}
+
+              {activeTab === 'analytics' && (
+                <AnalyticsPanel
                   site={site}
                   onUpdate={(updates: Partial<Site>) => setSite({ ...site, ...updates })}
                 />

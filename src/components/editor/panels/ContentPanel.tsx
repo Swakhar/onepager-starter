@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Input, Textarea, Label } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { ImageUpload } from '@/components/ui/ImageUpload'
+import { AIAssistant } from '@/components/editor/AIAssistant'
 import { TemplateData, HeroData, AboutData, ContactData, ProjectData, SkillData } from '@/types/template'
 
 interface ContentPanelProps {
@@ -236,31 +237,52 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange }
             
             <div>
               <Label>Title *</Label>
-              <Input
-                value={data.hero.title}
-                onChange={(e) => handleHeroChange('title', e.target.value)}
-                placeholder="Your name or headline"
-                className="mt-1"
-              />
+              <div className="flex items-start gap-2 mt-1">
+                <Input
+                  value={data.hero.title}
+                  onChange={(e) => handleHeroChange('title', e.target.value)}
+                  placeholder="Your name or headline"
+                  className="flex-1"
+                />
+                <AIAssistant
+                  currentText={data.hero.title}
+                  onApply={(newText) => handleHeroChange('title', newText)}
+                  context="hero title"
+                />
+              </div>
             </div>
             <div>
               <Label>Subtitle</Label>
-              <Input
-                value={data.hero.subtitle || ''}
-                onChange={(e) => handleHeroChange('subtitle', e.target.value)}
-                placeholder="Your role or tagline"
-                className="mt-1"
-              />
+              <div className="flex items-start gap-2 mt-1">
+                <Input
+                  value={data.hero.subtitle || ''}
+                  onChange={(e) => handleHeroChange('subtitle', e.target.value)}
+                  placeholder="Your tagline"
+                  className="flex-1"
+                />
+                <AIAssistant
+                  currentText={data.hero.subtitle || ''}
+                  onApply={(newText) => handleHeroChange('subtitle', newText)}
+                  context="hero subtitle"
+                />
+              </div>
             </div>
             <div>
               <Label>Description</Label>
-              <Textarea
-                value={data.hero.description || ''}
-                onChange={(e) => handleHeroChange('description', e.target.value)}
-                placeholder="Tell visitors about yourself"
-                className="mt-1"
-                rows={3}
-              />
+              <div className="flex items-start gap-2 mt-1">
+                <Textarea
+                  value={data.hero.description || ''}
+                  onChange={(e) => handleHeroChange('description', e.target.value)}
+                  placeholder="Tell visitors about yourself"
+                  className="flex-1"
+                  rows={3}
+                />
+                <AIAssistant
+                  currentText={data.hero.description || ''}
+                  onApply={(newText) => handleHeroChange('description', newText)}
+                  context="hero description"
+                />
+              </div>
             </div>
             <div>
               <ImageUpload
@@ -286,22 +308,36 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange }
             
             <div>
               <Label>Title *</Label>
-              <Input
-                value={data.about.title}
-                onChange={(e) => handleAboutChange('title', e.target.value)}
-                placeholder="About Me"
-                className="mt-1"
-              />
+              <div className="flex items-start gap-2 mt-1">
+                <Input
+                  value={data.about.title}
+                  onChange={(e) => handleAboutChange('title', e.target.value)}
+                  placeholder="About Me"
+                  className="flex-1"
+                />
+                <AIAssistant
+                  currentText={data.about.title}
+                  onApply={(newText) => handleAboutChange('title', newText)}
+                  context="about section title"
+                />
+              </div>
             </div>
             <div>
               <Label>Description *</Label>
-              <Textarea
-                value={data.about.description || ''}
-                onChange={(e) => handleAboutChange('description', e.target.value)}
-                placeholder="Tell your story..."
-                className="mt-1"
-                rows={4}
-              />
+              <div className="flex items-start gap-2 mt-1">
+                <Textarea
+                  value={data.about.description || ''}
+                  onChange={(e) => handleAboutChange('description', e.target.value)}
+                  placeholder="Tell your story..."
+                  className="flex-1"
+                  rows={4}
+                />
+                <AIAssistant
+                  currentText={data.about.description || ''}
+                  onApply={(newText) => handleAboutChange('description', newText)}
+                  context="about section description"
+                />
+              </div>
             </div>
             <div>
               <ImageUpload
