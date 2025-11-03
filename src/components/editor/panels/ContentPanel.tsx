@@ -3,6 +3,7 @@ import { Input, Textarea, Label } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import { AIAssistant } from '@/components/editor/AIAssistant'
+import { ImageSuggestions } from '@/components/editor/ImageSuggestions'
 import { TemplateData, HeroData, AboutData, ContactData, ProjectData, SkillData } from '@/types/template'
 
 interface ContentPanelProps {
@@ -317,8 +318,16 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange }
               </div>
             </div>
             <div className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm font-medium text-gray-700">Hero Image</Label>
+                <ImageSuggestions
+                  context="professional hero banner"
+                  onSelect={(url) => handleHeroChange('image', url)}
+                  orientation="landscape"
+                />
+              </div>
               <ImageUpload
-                label="Hero Image"
+                label=""
                 value={data.hero.image || ''}
                 onChange={(url) => handleHeroChange('image', url)}
                 aspectRatio="landscape"
@@ -408,8 +417,16 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange }
             </div>
 
             <div className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm font-medium text-gray-700">About Image</Label>
+                <ImageSuggestions
+                  context="professional portrait headshot"
+                  onSelect={(url) => handleAboutChange('image', url)}
+                  orientation="portrait"
+                />
+              </div>
               <ImageUpload
-                label="About Image"
+                label=""
                 value={data.about.image || ''}
                 onChange={(url) => handleAboutChange('image', url)}
                 aspectRatio="portrait"

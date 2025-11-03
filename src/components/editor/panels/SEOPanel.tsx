@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 import { Site } from '@/types/site'
 
 interface SEOPanelProps {
@@ -7,6 +9,8 @@ interface SEOPanelProps {
 }
 
 export function SEOPanel({ site, onUpdate }: SEOPanelProps) {
+  const [isGenerating, setIsGenerating] = useState(false)
+
   const updateSEO = (updates: Partial<typeof site.settings.seo>) => {
     onUpdate({
       settings: {
@@ -19,10 +23,65 @@ export function SEOPanel({ site, onUpdate }: SEOPanelProps) {
     })
   }
 
+  const handleGenerateSEO = async () => {
+    setIsGenerating(true)
+    try {
+      // Gather content from the site
+      const content = `
+        Title: ${site.data.hero?.title || ''}
+        Subtitle: ${site.data.hero?.subtitle || ''}
+        Description: ${site.data.hero?.description || ''}
+        About: ${site.data.about?.title || ''} - ${site.data.about?.description || ''}
+      `.trim()
+
+      const response = await fetch('/api/ai/generate-seo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+          brandName: site.title,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate SEO')
+      }
+
+      const seoData = data.seo
+
+      // Update SEO settings
+      updateSEO({
+        title: seoData.title,
+        description: seoData.description,
+        keywords: seoData.keywords,
+      })
+
+      alert('✨ SEO metadata generated successfully!')
+    } catch (error: any) {
+      console.error('SEO generation error:', error)
+      alert(`Failed to generate SEO: ${error.message}`)
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   return (
     <div className="space-y-6 p-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-white">SEO Settings</h3>
+        <Button
+          size="sm"
+          onClick={handleGenerateSEO}
+          disabled={isGenerating}
+          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+        >
+          {isGenerating ? '⏳ Generating...' : '🚀 AI Generate'}
+        </Button>
+      </div>
+      
       <div>
-        <h3 className="text-lg font-semibold text-white mb-4">SEO Settings</h3>
         
         {/* Meta Title */}
         <div className="space-y-2 mb-4">
