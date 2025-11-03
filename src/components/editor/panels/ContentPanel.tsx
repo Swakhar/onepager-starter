@@ -493,7 +493,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange }
                 {(data.projects || []).map((project, index) => (
                   <div
                     key={project.id}
-                    className="border border-gray-200 rounded-xl overflow-hidden bg-white hover:shadow-lg transition-all duration-200"
+                    className="border border-gray-200 rounded-xl overflow-hidden bg-gray-50 hover:shadow-lg transition-all duration-200"
                   >
                     <div
                       className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 cursor-pointer"
@@ -523,7 +523,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange }
                           </button>
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-900">{project.title}</p>
+                          <p className="font-semibold text-black">{project.title}</p>
                           <p className="text-xs text-gray-500">
                             {project.tags?.length || 0} technologies
                           </p>
@@ -747,7 +747,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange }
                           </button>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900">{skill.name}</p>
+                          <p className="font-semibold text-black">{skill.name}</p>
                           <div className="flex items-center gap-3 mt-2">
                             <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                               <div
