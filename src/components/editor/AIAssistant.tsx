@@ -1,17 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/Button'
 
 interface AIAssistantProps {
   currentText: string
   onApply: (newText: string) => void
-  context?: string // e.g., "portfolio hero section"
+  context?: string
+  isTextarea?: boolean // NEW: Flag for textarea styling
 }
 
-export function AIAssistant({ currentText, onApply, context }: AIAssistantProps) {
+export function AIAssistant({ currentText, onApply, context, isTextarea = false }: AIAssistantProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedText, setGeneratedText] = useState('')
   const [showPreview, setShowPreview] = useState(false)
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   const handleAIAction = async (type: string, customPrompt?: string) => {
     setIsGenerating(true)
@@ -43,20 +47,57 @@ export function AIAssistant({ currentText, onApply, context }: AIAssistantProps)
     }
   }
 
+  // Update menu position on scroll and resize
+  const updateMenuPosition = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setMenuPosition({
+        top: rect.bottom + 8,
+        left: rect.left,
+      })
+    }
+  }
+
+  const handleButtonClick = () => {
+    if (!showMenu) {
+      updateMenuPosition()
+    }
+    setShowMenu(!showMenu)
+  }
+
+  // Listen for scroll and resize events when menu is open
+  useEffect(() => {
+    if (showMenu) {
+      updateMenuPosition()
+      window.addEventListener('scroll', updateMenuPosition, true) // true = capture phase (catches all scrolls)
+      window.addEventListener('resize', updateMenuPosition)
+      
+      return () => {
+        window.removeEventListener('scroll', updateMenuPosition, true)
+        window.removeEventListener('resize', updateMenuPosition)
+      }
+    }
+  }, [showMenu])
+
   return (
-    <div className="relative">
-      {/* AI Button */}
+    <>
+      {/* AI Button - Different styles for textarea vs input */}
       <Button
+        ref={buttonRef}
         variant="outline"
         size="sm"
-        onClick={() => setShowMenu(!showMenu)}
-        className="bg-gradient-to-r from-purple-600/10 to-pink-600/10 border-purple-500/30 hover:border-purple-500/50 text-purple-300"
+        onClick={handleButtonClick}
+        className={`bg-gradient-to-r from-purple-600/10 to-pink-600/10 border-purple-500/30 hover:border-purple-500/50 text-purple-300 ${
+          isTextarea 
+            ? 'absolute top-2 right-2 z-10' // Positioned in top-right corner for textareas
+            : '' // Inline for inputs
+        }`}
         disabled={isGenerating}
       >
         {isGenerating ? (
           <>
             <span className="animate-spin">⏳</span>
-            <span className="ml-2">AI Working...</span>
+            <span className="ml-2">AI</span>
           </>
         ) : (
           <>
@@ -66,15 +107,23 @@ export function AIAssistant({ currentText, onApply, context }: AIAssistantProps)
         )}
       </Button>
 
-      {/* AI Menu */}
-      {showMenu && (
+      {/* AI Menu - Rendered via Portal */}
+      {showMenu && typeof window !== 'undefined' && createPortal(
         <>
+          {/* Backdrop overlay */}
           <div 
-            className="fixed inset-0 z-40" 
+            className="fixed inset-0 z-[9998]" 
             onClick={() => setShowMenu(false)}
           />
           
-          <div className="absolute left-0 top-full mt-2 w-64 bg-[#1a1a1a] border-2 border-purple-500/30 rounded-xl shadow-2xl z-50 overflow-hidden">
+          {/* Dropdown Menu */}
+          <div 
+            className="fixed w-64 bg-[#1a1a1a] border-2 border-purple-500/30 rounded-xl shadow-2xl z-[9999] overflow-hidden"
+            style={{
+              top: `${menuPosition.top}px`,
+              left: `${menuPosition.left}px`,
+            }}
+          >
             <div className="p-3 bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-b border-purple-500/30">
               <h4 className="font-semibold text-white text-sm flex items-center gap-2">
                 <span>✨</span> AI Assistant
@@ -140,12 +189,13 @@ export function AIAssistant({ currentText, onApply, context }: AIAssistantProps)
               )}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
 
       {/* Preview Modal */}
-      {showPreview && generatedText && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      {showPreview && generatedText && typeof window !== 'undefined' && createPortal(
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
           <div className="bg-[#1a1a1a] border-2 border-purple-500/30 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
             <div className="p-4 bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-b border-purple-500/30">
               <h3 className="font-bold text-white flex items-center gap-2">
@@ -155,7 +205,6 @@ export function AIAssistant({ currentText, onApply, context }: AIAssistantProps)
             </div>
             
             <div className="p-6 overflow-y-auto max-h-96">
-              {/* Original Text */}
               {currentText && (
                 <div className="mb-4">
                   <p className="text-xs text-gray-500 mb-2">ORIGINAL:</p>
@@ -165,7 +214,6 @@ export function AIAssistant({ currentText, onApply, context }: AIAssistantProps)
                 </div>
               )}
               
-              {/* Generated Text */}
               <div>
                 <p className="text-xs text-gray-500 mb-2">AI IMPROVED:</p>
                 <div className="p-3 bg-gradient-to-r from-purple-600/10 to-pink-600/10 rounded-lg border border-purple-500/30 text-white text-sm">
@@ -194,8 +242,9 @@ export function AIAssistant({ currentText, onApply, context }: AIAssistantProps)
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   )
 }
