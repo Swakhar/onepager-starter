@@ -4,16 +4,18 @@ import { Button } from '@/components/ui/Button'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import { AIAssistant } from '@/components/editor/AIAssistant'
 import { ImageSuggestions } from '@/components/editor/ImageSuggestions'
+import { SmartSectionGenerator } from '@/components/editor/SmartSectionGenerator'
 import { TemplateData, HeroData, AboutData, ContactData, ProjectData, SkillData } from '@/types/template'
 
 interface ContentPanelProps {
   data: TemplateData
   onDataChange: (data: TemplateData) => void
+  templateId?: string
 }
 
 type Section = 'hero' | 'about' | 'projects' | 'skills' | 'contact' | 'social'
 
-export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange }) => {
+export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, templateId = 'modern-portfolio' }) => {
   const [activeSection, setActiveSection] = useState<Section>('hero')
   const [expandedProject, setExpandedProject] = useState<number | null>(null)
   const [expandedSkill, setExpandedSkill] = useState<number | null>(null)
@@ -197,6 +199,107 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange }
     })
   }
 
+  const handleSectionGenerated = (section: any) => {
+    console.log('Generated section:', section)
+    
+    // Apply the generated section content based on type
+    switch (section.type) {
+      case 'hero':
+        if (data.hero) {
+          handleHeroChange('title', section.title)
+          handleHeroChange('subtitle', section.subtitle || '')
+          handleHeroChange('description', section.content || '')
+          if (section.cta?.text) {
+            // Update CTA if it exists
+            handleHeroChange('cta', {
+              ...data.hero.cta,
+              primary: {
+                text: section.cta.text,
+                link: data.hero.cta?.primary?.link || '#'
+              }
+            })
+          }
+        }
+        setActiveSection('hero')
+        // Show success notification
+        setTimeout(() => {
+          alert('✅ Hero section updated! Check the Hero tab to see the changes.')
+        }, 100)
+        break
+        
+      case 'about':
+        if (data.about) {
+          handleAboutChange('title', section.title)
+          handleAboutChange('description', section.content || '')
+        }
+        setActiveSection('about')
+        setTimeout(() => {
+          alert('✅ About section updated! Check the About tab to see the changes.')
+        }, 100)
+        break
+        
+      case 'contact':
+        if (data.contact) {
+          // Extract email and phone from items if available
+          const emailItem = section.items?.find((item: any) => 
+            item.title.toLowerCase().includes('email')
+          )
+          const phoneItem = section.items?.find((item: any) => 
+            item.title.toLowerCase().includes('phone')
+          )
+          const locationItem = section.items?.find((item: any) => 
+            item.title.toLowerCase().includes('location')
+          )
+          
+          if (emailItem) handleContactChange('email', emailItem.description)
+          if (phoneItem) handleContactChange('phone', phoneItem.description)
+          if (locationItem) handleContactChange('location', locationItem.description)
+        }
+        setActiveSection('contact')
+        setTimeout(() => {
+          alert('✅ Contact section updated! Check the Contact tab to see the changes.')
+        }, 100)
+        break
+        
+      case 'services':
+      case 'features':
+      case 'testimonials':
+        // For sections with items, show a detailed view of what was generated
+        const itemsList = section.items?.map((item: any, i: number) => 
+          `${i + 1}. ${item.title}\n   ${item.description}`
+        ).join('\n\n') || ''
+        
+        alert(
+          `✨ ${section.title} Generated!\n\n` +
+          `${section.subtitle || ''}\n\n` +
+          `Items:\n${itemsList}\n\n` +
+          `💡 Tip: You can use this content in your Projects or Skills sections by copying and pasting.`
+        )
+        break
+        
+      case 'cta':
+        // Show CTA content
+        alert(
+          `📢 Call-to-Action Generated!\n\n` +
+          `Headline: ${section.title}\n` +
+          `Subtitle: ${section.subtitle || ''}\n` +
+          `${section.content || ''}\n\n` +
+          `Button Text: ${section.cta?.text || 'Get Started'}\n\n` +
+          `💡 Tip: Use this compelling copy in your Hero section!`
+        )
+        break
+        
+      default:
+        // For other section types, show the content
+        alert(
+          `✨ Section Generated!\n\n` +
+          `${section.title}\n\n` +
+          `${section.content || ''}\n\n` +
+          `💡 Note: This section type needs manual integration.`
+        )
+    }
+  }
+
   const sections: { id: Section; label: string; icon: string }[] = [
     { id: 'hero', label: 'Hero', icon: '🎯' },
     { id: 'about', label: 'About', icon: '👤' },
@@ -208,6 +311,27 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange }
 
   return (
     <div className="space-y-4">
+      {/* AI Section Generator */}
+      <div className="ai-section-banner bg-gradient-to-r from-green-50 to-teal-50 border-2 border-green-200 rounded-lg p-4">
+        <div className="flex items-start gap-3 mb-3">
+          <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-green-600 to-teal-600 rounded-lg flex items-center justify-center text-xl shadow-md">
+            🤖
+          </div>
+          <div className="flex-1">
+            <h4 className="font-bold !text-gray-900 text-sm">AI Section Generator</h4>
+            <p className="text-xs !text-gray-600 mt-1">
+              Generate complete sections with AI-powered content instantly
+            </p>
+          </div>
+        </div>
+        <SmartSectionGenerator
+          onSectionGenerated={handleSectionGenerated}
+          businessName={data.hero?.title || 'Your Business'}
+          industry="technology"
+          templateId={templateId}
+        />
+      </div>
+
       {/* Section Navigation */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5">
         <div className="grid grid-cols-3 gap-1.5">

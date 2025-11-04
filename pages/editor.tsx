@@ -472,6 +472,7 @@ export default function EditorPage() {
                 <ContentPanel
                   data={site.data}
                   onDataChange={(newData: TemplateData) => setSite({ ...site, data: newData })}
+                  templateId={site.templateId}
                 />
               )}
 

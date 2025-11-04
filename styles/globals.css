@@ -60,18 +60,19 @@ body {
 }
 
 /* Editor Dark Theme Text Overrides */
-.editor-panel label,
-.editor-panel h1,
-.editor-panel h2,
-.editor-panel h3,
-.editor-panel h4,
-.editor-panel h5,
-.editor-panel h6 {
+/* Exclude AI banners and light-themed components */
+.editor-panel label:not(.ai-section-banner *),
+.editor-panel h1:not(.ai-section-banner *),
+.editor-panel h2:not(.ai-section-banner *),
+.editor-panel h3:not(.ai-section-banner *),
+.editor-panel h4:not(.ai-section-banner *),
+.editor-panel h5:not(.ai-section-banner *),
+.editor-panel h6:not(.ai-section-banner *) {
   @apply text-white;
 }
 
-.editor-panel p,
-.editor-panel span:not(.text-green-400):not(.text-red-600):not(.text-blue-700):not(.text-purple-700):not(.text-indigo-700) {
+.editor-panel p:not(.ai-section-banner *),
+.editor-panel span:not(.ai-section-banner *):not(.text-green-400):not(.text-red-600):not(.text-blue-700):not(.text-purple-700):not(.text-indigo-700) {
   @apply text-gray-300;
 }
 
