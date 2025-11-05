@@ -1,5 +1,8 @@
 import React from 'react'
 import { TemplateData, ColorScheme, FontScheme } from '@/types/template'
+import { Services } from './Services'
+import { Features } from './Features'
+import { Testimonials } from './Testimonials'
 
 interface BusinessCardProps {
   data: TemplateData
@@ -8,7 +11,7 @@ interface BusinessCardProps {
 }
 
 const BusinessCard: React.FC<BusinessCardProps> = ({ data, colors, fonts }) => {
-  const { hero, about, contact, social, skills } = data
+  const { hero, about, contact, social, skills, services, features, testimonials } = data
 
   return (
     <div
@@ -285,6 +288,15 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ data, colors, fonts }) => {
           </div>
         </section>
       )}
+
+      {/* Services Section */}
+      {services && <Services data={services} colors={colors} fonts={fonts} />}
+
+      {/* Features Section */}
+      {features && <Features data={features} colors={colors} fonts={fonts} />}
+
+      {/* Testimonials Section */}
+      {testimonials && <Testimonials data={testimonials} colors={colors} fonts={fonts} />}
     </div>
   )
 }

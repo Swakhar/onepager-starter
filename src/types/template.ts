@@ -37,6 +37,60 @@ export interface FontScheme {
   }
 }
 
+export interface SocialLinks {
+  github?: string
+  linkedin?: string
+  twitter?: string
+  instagram?: string
+  dribbble?: string
+  behance?: string
+  website?: string
+  [key: string]: string | undefined
+}
+
+export interface ServicesData {
+  title: string
+  subtitle?: string
+  items: ServiceItem[]
+}
+
+export interface ServiceItem {
+  id: string
+  title: string
+  description: string
+  icon?: string
+  features?: string[]
+}
+
+export interface FeaturesData {
+  title: string
+  subtitle?: string
+  items: FeatureItem[]
+}
+
+export interface FeatureItem {
+  id: string
+  title: string
+  description: string
+  icon?: string
+}
+
+export interface TestimonialsData {
+  title: string
+  subtitle?: string
+  items: TestimonialItem[]
+}
+
+export interface TestimonialItem {
+  id: string
+  content: string
+  author: string
+  role: string
+  company?: string
+  avatar?: string
+  rating?: number
+}
+
 export interface TemplateData {
   hero?: HeroData
   about?: AboutData
@@ -46,6 +100,9 @@ export interface TemplateData {
   education?: EducationData[]
   contact?: ContactData
   social?: SocialLinks
+  services?: ServicesData
+  features?: FeaturesData
+  testimonials?: TestimonialsData
   [key: string]: any // Allow custom sections
 }
 
@@ -112,15 +169,4 @@ export interface ContactData {
   phone?: string
   location?: string
   showForm?: boolean
-}
-
-export interface SocialLinks {
-  github?: string
-  linkedin?: string
-  twitter?: string
-  instagram?: string
-  dribbble?: string
-  behance?: string
-  website?: string
-  [key: string]: string | undefined
 }

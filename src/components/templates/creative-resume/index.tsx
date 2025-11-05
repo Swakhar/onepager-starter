@@ -1,5 +1,8 @@
 import React from 'react'
 import { TemplateData, ColorScheme, FontScheme } from '@/types/template'
+import { Services } from './Services'
+import { Features } from './Features'
+import { Testimonials } from './Testimonials'
 
 interface CreativeResumeProps {
   data: TemplateData
@@ -8,7 +11,7 @@ interface CreativeResumeProps {
 }
 
 const CreativeResume: React.FC<CreativeResumeProps> = ({ data, colors, fonts }) => {
-  const { hero, about, experience, education, skills, projects, contact, social } = data
+  const { hero, about, experience, education, skills, projects, contact, social, services, features, testimonials } = data
 
   return (
     <div
@@ -444,6 +447,15 @@ const CreativeResume: React.FC<CreativeResumeProps> = ({ data, colors, fonts }) 
           </div>
         </div>
       </div>
+
+      {/* Services Section */}
+      {services && <Services data={services} colors={colors} fonts={fonts} />}
+
+      {/* Features Section */}
+      {features && <Features data={features} colors={colors} fonts={fonts} />}
+
+      {/* Testimonials Section */}
+      {testimonials && <Testimonials data={testimonials} colors={colors} fonts={fonts} />}
     </div>
   )
 }

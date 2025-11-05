@@ -13,7 +13,7 @@ interface ContentPanelProps {
   templateId?: string
 }
 
-type Section = 'hero' | 'about' | 'projects' | 'skills' | 'contact' | 'social'
+type Section = 'hero' | 'about' | 'projects' | 'skills' | 'contact' | 'social' | 'services' | 'features' | 'testimonials'
 
 export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, templateId = 'modern-portfolio' }) => {
   const [activeSection, setActiveSection] = useState<Section>('hero')
@@ -262,19 +262,73 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
         break
         
       case 'services':
-      case 'features':
-      case 'testimonials':
-        // For sections with items, show a detailed view of what was generated
-        const itemsList = section.items?.map((item: any, i: number) => 
-          `${i + 1}. ${item.title}\n   ${item.description}`
-        ).join('\n\n') || ''
+        // Apply services data to template
+        onDataChange({
+          ...data,
+          services: {
+            title: section.title,
+            subtitle: section.subtitle || '',
+            items: (section.items || []).map((item: any, index: number) => ({
+              id: `service-${Date.now()}-${index}`,
+              title: item.title,
+              description: item.description,
+              icon: item.icon || '⚡',
+              features: item.features || []
+            }))
+          }
+        })
+        // Switch to the services tab after generation
+        setActiveSection('services')
+        setTimeout(() => {
+          alert('✅ Services section created! Check the new "🛠️ Services" tab to edit it.')
+        }, 100)
+        break
         
-        alert(
-          `✨ ${section.title} Generated!\n\n` +
-          `${section.subtitle || ''}\n\n` +
-          `Items:\n${itemsList}\n\n` +
-          `💡 Tip: You can use this content in your Projects or Skills sections by copying and pasting.`
-        )
+      case 'features':
+        // Apply features data to template
+        onDataChange({
+          ...data,
+          features: {
+            title: section.title,
+            subtitle: section.subtitle || '',
+            items: (section.items || []).map((item: any, index: number) => ({
+              id: `feature-${Date.now()}-${index}`,
+              title: item.title,
+              description: item.description,
+              icon: item.icon || '✨'
+            }))
+          }
+        })
+        // Switch to the features tab after generation
+        setActiveSection('features')
+        setTimeout(() => {
+          alert('✅ Features section created! Check the new "✨ Features" tab to edit it.')
+        }, 100)
+        break
+        
+      case 'testimonials':
+        // Apply testimonials data to template
+        onDataChange({
+          ...data,
+          testimonials: {
+            title: section.title,
+            subtitle: section.subtitle || '',
+            items: (section.items || []).map((item: any, index: number) => ({
+              id: `testimonial-${Date.now()}-${index}`,
+              content: item.content || item.description,
+              author: item.author || 'Anonymous',
+              role: item.role || 'Customer',
+              company: item.company || '',
+              avatar: item.avatar || '',
+              rating: item.rating || 5
+            }))
+          }
+        })
+        // Switch to the testimonials tab after generation
+        setActiveSection('testimonials')
+        setTimeout(() => {
+          alert('✅ Testimonials section created! Check the new "⭐ Testimonials" tab to edit it.')
+        }, 100)
         break
         
       case 'cta':
@@ -305,9 +359,49 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
     { id: 'about', label: 'About', icon: '👤' },
     { id: 'projects', label: 'Projects', icon: '💼' },
     { id: 'skills', label: 'Skills', icon: '⚡' },
+    { id: 'services', label: 'Services', icon: '🛠️' },
+    { id: 'features', label: 'Features', icon: '✨' },
+    { id: 'testimonials', label: 'Testimonials', icon: '⭐' },
     { id: 'contact', label: 'Contact', icon: '📧' },
     { id: 'social', label: 'Social', icon: '🔗' },
   ]
+
+  // Define which sections each template supports
+  const templateSupportedSections: Record<string, Section[]> = {
+    'modern-portfolio': ['hero', 'about', 'projects', 'services', 'features', 'testimonials', 'contact', 'social'],
+    'business-card': ['hero', 'about', 'skills', 'services', 'features', 'testimonials', 'contact', 'social'],
+    'creative-resume': ['hero', 'about', 'projects', 'skills', 'services', 'features', 'testimonials', 'contact', 'social'],
+  }
+
+  // Filter sections based on template AND whether content exists
+  const visibleSections = sections.filter(section => {
+    // First check if template supports this section
+    const isTemplateSupported = templateSupportedSections[templateId]?.includes(section.id) ?? true
+    
+    if (!isTemplateSupported) return false
+    
+    // For dynamic sections (services, features, testimonials), only show if content exists
+    if (section.id === 'services') {
+      return data.services && data.services.items && data.services.items.length > 0
+    }
+    if (section.id === 'features') {
+      return data.features && data.features.items && data.features.items.length > 0
+    }
+    if (section.id === 'testimonials') {
+      return data.testimonials && data.testimonials.items && data.testimonials.items.length > 0
+    }
+    
+    // For other sections, show them by default if template supports
+    return true
+  })
+
+  // Auto-switch to first available section if current one isn't supported
+  React.useEffect(() => {
+    const currentSectionSupported = visibleSections.some(s => s.id === activeSection)
+    if (!currentSectionSupported && visibleSections.length > 0) {
+      setActiveSection(visibleSections[0].id)
+    }
+  }, [templateId, activeSection])
 
   return (
     <div className="space-y-4">
@@ -335,7 +429,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
       {/* Section Navigation */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5">
         <div className="grid grid-cols-3 gap-1.5">
-          {sections.map((section) => (
+          {visibleSections.map((section) => (
             <button
               key={section.id}
               onClick={() => setActiveSection(section.id)}
@@ -1156,6 +1250,415 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Services Section */}
+        {activeSection === 'services' && (
+          <div className="p-5 space-y-5 animate-fadeIn">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-xl shadow-md">
+                  🛠️
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-gray-900">Services</h3>
+                    {data.services?.items && (
+                      <span className="px-2 py-0.5 text-xs font-semibold bg-orange-100 text-orange-700 rounded-full">
+                        {data.services.items.length} {data.services.items.length === 1 ? 'service' : 'services'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500">What services do you offer?</p>
+                </div>
+              </div>
+            </div>
+
+            {!data.services || !data.services.items || data.services.items.length === 0 ? (
+              <div className="text-center py-10 bg-gradient-to-br from-gray-50 to-orange-50 rounded-lg border-2 border-dashed border-gray-300">
+                <span className="text-4xl mb-2 block">🛠️</span>
+                <p className="text-gray-700 font-medium mb-2">No services yet</p>
+                <p className="text-xs text-gray-500 mb-3">Use AI to generate a complete services section</p>
+                <SmartSectionGenerator
+                  onSectionGenerated={handleSectionGenerated}
+                  businessName={data.hero?.title || 'Your Business'}
+                  industry="technology"
+                  templateId={templateId}
+                />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-700">
+                    💡 <strong>Tip:</strong> Edit your services section title and subtitle below, or regenerate with AI for different content.
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Section Title</Label>
+                  <Input
+                    value={data.services.title}
+                    onChange={(e) => onDataChange({
+                      ...data,
+                      services: { ...data.services!, title: e.target.value }
+                    })}
+                    placeholder="Our Services"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Section Subtitle</Label>
+                  <Input
+                    value={data.services.subtitle || ''}
+                    onChange={(e) => onDataChange({
+                      ...data,
+                      services: { ...data.services!, subtitle: e.target.value }
+                    })}
+                    placeholder="What we offer to help you succeed"
+                  />
+                </div>
+
+                <div className="pt-4 border-t border-gray-200">
+                  <h4 className="text-sm font-bold text-gray-900 mb-3">Service Items</h4>
+                  <div className="space-y-3">
+                    {data.services.items.map((service, index) => (
+                      <div key={service.id} className="border border-gray-200 rounded-lg p-4 bg-white">
+                        <div className="flex items-start gap-3 mb-3">
+                          <Input
+                            value={service.icon || ''}
+                            onChange={(e) => {
+                              const newItems = [...data.services!.items]
+                              newItems[index] = { ...service, icon: e.target.value }
+                              onDataChange({ ...data, services: { ...data.services!, items: newItems } })
+                            }}
+                            placeholder="🎨"
+                            className="w-16 text-center text-2xl"
+                          />
+                          <div className="flex-1">
+                            <Input
+                              value={service.title}
+                              onChange={(e) => {
+                                const newItems = [...data.services!.items]
+                                newItems[index] = { ...service, title: e.target.value }
+                                onDataChange({ ...data, services: { ...data.services!, items: newItems } })
+                              }}
+                              placeholder="Service Name"
+                              className="font-semibold mb-2"
+                            />
+                            <Textarea
+                              value={service.description}
+                              onChange={(e) => {
+                                const newItems = [...data.services!.items]
+                                newItems[index] = { ...service, description: e.target.value }
+                                onDataChange({ ...data, services: { ...data.services!, items: newItems } })
+                              }}
+                              placeholder="Service description..."
+                              rows={2}
+                            />
+                          </div>
+                          <button
+                            onClick={() => {
+                              const newItems = data.services!.items.filter((_, i) => i !== index)
+                              onDataChange({ ...data, services: { ...data.services!, items: newItems } })
+                            }}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Features Section */}
+        {activeSection === 'features' && (
+          <div className="p-5 space-y-5 animate-fadeIn">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-amber-600 flex items-center justify-center text-xl shadow-md">
+                  ✨
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-gray-900">Features</h3>
+                    {data.features?.items && (
+                      <span className="px-2 py-0.5 text-xs font-semibold bg-yellow-100 text-yellow-700 rounded-full">
+                        {data.features.items.length} {data.features.items.length === 1 ? 'feature' : 'features'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500">Highlight your key features</p>
+                </div>
+              </div>
+            </div>
+
+            {!data.features || !data.features.items || data.features.items.length === 0 ? (
+              <div className="text-center py-10 bg-gradient-to-br from-gray-50 to-yellow-50 rounded-lg border-2 border-dashed border-gray-300">
+                <span className="text-4xl mb-2 block">✨</span>
+                <p className="text-gray-700 font-medium mb-2">No features yet</p>
+                <p className="text-xs text-gray-500 mb-3">Use AI to generate a complete features section</p>
+                <SmartSectionGenerator
+                  onSectionGenerated={handleSectionGenerated}
+                  businessName={data.hero?.title || 'Your Business'}
+                  industry="technology"
+                  templateId={templateId}
+                />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-700">
+                    💡 <strong>Tip:</strong> Features should highlight benefits and capabilities that make you stand out.
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Section Title</Label>
+                  <Input
+                    value={data.features.title}
+                    onChange={(e) => onDataChange({
+                      ...data,
+                      features: { ...data.features!, title: e.target.value }
+                    })}
+                    placeholder="Key Features"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Section Subtitle</Label>
+                  <Input
+                    value={data.features.subtitle || ''}
+                    onChange={(e) => onDataChange({
+                      ...data,
+                      features: { ...data.features!, subtitle: e.target.value }
+                    })}
+                    placeholder="What makes us special"
+                  />
+                </div>
+
+                <div className="pt-4 border-t border-gray-200">
+                  <h4 className="text-sm font-bold text-gray-900 mb-3">Feature Items</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {data.features.items.map((feature, index) => (
+                      <div key={feature.id} className="border border-gray-200 rounded-lg p-3 bg-white">
+                        <div className="flex items-start gap-2 mb-2">
+                          <Input
+                            value={feature.icon || ''}
+                            onChange={(e) => {
+                              const newItems = [...data.features!.items]
+                              newItems[index] = { ...feature, icon: e.target.value }
+                              onDataChange({ ...data, features: { ...data.features!, items: newItems } })
+                            }}
+                            placeholder="⚡"
+                            className="w-12 text-center text-xl"
+                          />
+                          <button
+                            onClick={() => {
+                              const newItems = data.features!.items.filter((_, i) => i !== index)
+                              onDataChange({ ...data, features: { ...data.features!, items: newItems } })
+                            }}
+                            className="w-6 h-6 flex items-center justify-center rounded text-red-500 hover:bg-red-50 text-sm"
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <Input
+                          value={feature.title}
+                          onChange={(e) => {
+                            const newItems = [...data.features!.items]
+                            newItems[index] = { ...feature, title: e.target.value }
+                            onDataChange({ ...data, features: { ...data.features!, items: newItems } })
+                          }}
+                          placeholder="Feature Name"
+                          className="font-semibold mb-2 text-sm"
+                        />
+                        <Textarea
+                          value={feature.description}
+                          onChange={(e) => {
+                            const newItems = [...data.features!.items]
+                            newItems[index] = { ...feature, description: e.target.value }
+                            onDataChange({ ...data, features: { ...data.features!, items: newItems } })
+                          }}
+                          placeholder="Feature description..."
+                          rows={2}
+                          className="text-xs"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Testimonials Section */}
+        {activeSection === 'testimonials' && (
+          <div className="p-5 space-y-5 animate-fadeIn">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-xl shadow-md">
+                  ⭐
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-gray-900">Testimonials</h3>
+                    {data.testimonials?.items && (
+                      <span className="px-2 py-0.5 text-xs font-semibold bg-pink-100 text-pink-700 rounded-full">
+                        {data.testimonials.items.length} {data.testimonials.items.length === 1 ? 'testimonial' : 'testimonials'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500">Showcase social proof</p>
+                </div>
+              </div>
+            </div>
+
+            {!data.testimonials || !data.testimonials.items || data.testimonials.items.length === 0 ? (
+              <div className="text-center py-10 bg-gradient-to-br from-gray-50 to-pink-50 rounded-lg border-2 border-dashed border-gray-300">
+                <span className="text-4xl mb-2 block">⭐</span>
+                <p className="text-gray-700 font-medium mb-2">No testimonials yet</p>
+                <p className="text-xs text-gray-500 mb-3">Use AI to generate testimonials</p>
+                <SmartSectionGenerator
+                  onSectionGenerated={handleSectionGenerated}
+                  businessName={data.hero?.title || 'Your Business'}
+                  industry="technology"
+                  templateId={templateId}
+                />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-700">
+                    💡 <strong>Tip:</strong> Great testimonials are specific, mention results, and feel authentic.
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Section Title</Label>
+                  <Input
+                    value={data.testimonials.title}
+                    onChange={(e) => onDataChange({
+                      ...data,
+                      testimonials: { ...data.testimonials!, title: e.target.value }
+                    })}
+                    placeholder="Client Testimonials"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Section Subtitle</Label>
+                  <Input
+                    value={data.testimonials.subtitle || ''}
+                    onChange={(e) => onDataChange({
+                      ...data,
+                      testimonials: { ...data.testimonials!, subtitle: e.target.value }
+                    })}
+                    placeholder="What our clients say about us"
+                  />
+                </div>
+
+                <div className="pt-4 border-t border-gray-200">
+                  <h4 className="text-sm font-bold text-gray-900 mb-3">Testimonial Items</h4>
+                  <div className="space-y-3">
+                    {data.testimonials.items.map((testimonial, index) => (
+                      <div key={testimonial.id} className="border border-gray-200 rounded-lg p-4 bg-white">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs font-medium text-gray-700">Rating</Label>
+                            <select
+                              value={testimonial.rating || 5}
+                              onChange={(e) => {
+                                const newItems = [...data.testimonials!.items]
+                                newItems[index] = { ...testimonial, rating: parseInt(e.target.value) }
+                                onDataChange({ ...data, testimonials: { ...data.testimonials!, items: newItems } })
+                              }}
+                              className="text-sm border border-gray-300 rounded px-2 py-1"
+                            >
+                              <option value={5}>⭐⭐⭐⭐⭐ (5)</option>
+                              <option value={4}>⭐⭐⭐⭐ (4)</option>
+                              <option value={3}>⭐⭐⭐ (3)</option>
+                              <option value={2}>⭐⭐ (2)</option>
+                              <option value={1}>⭐ (1)</option>
+                            </select>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const newItems = data.testimonials!.items.filter((_, i) => i !== index)
+                              onDataChange({ ...data, testimonials: { ...data.testimonials!, items: newItems } })
+                            }}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+
+                        <Textarea
+                          value={testimonial.content}
+                          onChange={(e) => {
+                            const newItems = [...data.testimonials!.items]
+                            newItems[index] = { ...testimonial, content: e.target.value }
+                            onDataChange({ ...data, testimonials: { ...data.testimonials!, items: newItems } })
+                          }}
+                          placeholder="The testimonial quote..."
+                          rows={3}
+                          className="mb-3"
+                        />
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            value={testimonial.author}
+                            onChange={(e) => {
+                              const newItems = [...data.testimonials!.items]
+                              newItems[index] = { ...testimonial, author: e.target.value }
+                              onDataChange({ ...data, testimonials: { ...data.testimonials!, items: newItems } })
+                            }}
+                            placeholder="Author Name"
+                            className="text-sm"
+                          />
+                          <Input
+                            value={testimonial.role}
+                            onChange={(e) => {
+                              const newItems = [...data.testimonials!.items]
+                              newItems[index] = { ...testimonial, role: e.target.value }
+                              onDataChange({ ...data, testimonials: { ...data.testimonials!, items: newItems } })
+                            }}
+                            placeholder="Job Title"
+                            className="text-sm"
+                          />
+                          <Input
+                            value={testimonial.company || ''}
+                            onChange={(e) => {
+                              const newItems = [...data.testimonials!.items]
+                              newItems[index] = { ...testimonial, company: e.target.value }
+                              onDataChange({ ...data, testimonials: { ...data.testimonials!, items: newItems } })
+                            }}
+                            placeholder="Company (Optional)"
+                            className="text-sm"
+                          />
+                          <Input
+                            value={testimonial.avatar || ''}
+                            onChange={(e) => {
+                              const newItems = [...data.testimonials!.items]
+                              newItems[index] = { ...testimonial, avatar: e.target.value }
+                              onDataChange({ ...data, testimonials: { ...data.testimonials!, items: newItems } })
+                            }}
+                            placeholder="Avatar URL (Optional)"
+                            className="text-sm"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
