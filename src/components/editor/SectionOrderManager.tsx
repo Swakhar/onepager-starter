@@ -23,12 +23,23 @@ export const SectionOrderManager: React.FC<SectionOrderManagerProps> = ({
   onDataChange,
   templateId = 'modern-portfolio',
 }) => {
-  // Default section order
-  const defaultOrder = ['hero', 'about', 'services', 'features', 'projects', 'skills', 'testimonials', 'contact']
+  // Define which sections each template supports for ordering
+  const templateOrderableSections: Record<string, string[]> = {
+    'modern-portfolio': ['hero', 'about', 'services', 'features', 'projects', 'testimonials', 'contact'],
+    'business-card': ['hero', 'skills', 'about', 'services', 'features', 'testimonials'],
+    'creative-resume': ['about', 'projects', 'services', 'features', 'testimonials'], // Hero, skills, education are fixed
+  }
+
+  // Get the default order for the current template
+  const defaultOrder = templateOrderableSections[templateId] || templateOrderableSections['modern-portfolio']
   const currentOrder = data.sectionOrder || defaultOrder
 
-  // Filter to only show sections that have data
+  // Filter to only show sections that have data AND are supported by the template
   const availableSections = currentOrder.filter((sectionId: string) => {
+    // First check if this template supports this section for ordering
+    if (!defaultOrder.includes(sectionId)) return false
+    
+    // Then check if the section has data
     if (sectionId === 'hero') return !!data.hero
     if (sectionId === 'about') return !!data.about
     if (sectionId === 'services') return data.services && data.services.items?.length > 0
@@ -91,6 +102,15 @@ export const SectionOrderManager: React.FC<SectionOrderManagerProps> = ({
           </Button>
         )}
       </div>
+
+      {/* Template-specific info */}
+      {templateId === 'creative-resume' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+          <p className="text-xs text-blue-700">
+            💡 <strong>Note:</strong> Hero, Skills, and Education sections are fixed in the sidebar. You can reorder the main content sections below.
+          </p>
+        </div>
+      )}
 
       <div className="space-y-2">
         {currentOrder.map((sectionId: string, index: number) => {

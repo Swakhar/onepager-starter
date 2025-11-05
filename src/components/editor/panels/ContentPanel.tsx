@@ -15,7 +15,7 @@ interface ContentPanelProps {
   templateId?: string
 }
 
-type Section = 'hero' | 'about' | 'projects' | 'skills' | 'contact' | 'social' | 'services' | 'features' | 'testimonials' | 'layout'
+type Section = 'hero' | 'about' | 'projects' | 'skills' | 'contact' | 'social' | 'services' | 'features' | 'testimonials' | 'layout' | 'experience' | 'education'
 
 export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, templateId = 'modern-portfolio' }) => {
   const [activeSection, setActiveSection] = useState<Section>('hero')
@@ -360,6 +360,8 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
     { id: 'layout', label: 'Layout', icon: '📐' },
     { id: 'hero', label: 'Hero', icon: '🎯' },
     { id: 'about', label: 'About', icon: '👤' },
+    { id: 'experience', label: 'Experience', icon: '💼' },
+    { id: 'education', label: 'Education', icon: '🎓' },
     { id: 'projects', label: 'Projects', icon: '💼' },
     { id: 'skills', label: 'Skills', icon: '⚡' },
     { id: 'services', label: 'Services', icon: '🛠️' },
@@ -373,13 +375,15 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
   const templateSupportedSections: Record<string, Section[]> = {
     'modern-portfolio': ['layout', 'hero', 'about', 'projects', 'services', 'features', 'testimonials', 'contact', 'social'],
     'business-card': ['layout', 'hero', 'about', 'skills', 'services', 'features', 'testimonials', 'contact', 'social'],
-    'creative-resume': ['layout', 'hero', 'about', 'projects', 'skills', 'services', 'features', 'testimonials', 'contact', 'social'],
+    'creative-resume': ['hero', 'about', 'experience', 'education', 'projects', 'skills', 'services', 'features', 'testimonials', 'contact', 'social'],
   }
 
   // Filter sections based on template AND whether content exists
   const visibleSections = sections.filter(section => {
-    // Layout section is always visible
-    if (section.id === 'layout') return true
+    // Layout section - hide for creative-resume template
+    if (section.id === 'layout') {
+      return templateId !== 'creative-resume'
+    }
     
     // First check if template supports this section
     const isTemplateSupported = templateSupportedSections[templateId]?.includes(section.id) ?? true
@@ -395,6 +399,14 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
     }
     if (section.id === 'testimonials') {
       return data.testimonials && data.testimonials.items && data.testimonials.items.length > 0
+    }
+    
+    // Experience and Education - only for creative-resume
+    if (section.id === 'experience') {
+      return templateId === 'creative-resume' && data.experience && data.experience.length > 0
+    }
+    if (section.id === 'education') {
+      return templateId === 'creative-resume' && data.education && data.education.length > 0
     }
     
     // For other sections, show them by default if template supports
@@ -1951,6 +1963,384 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Experience Section */}
+        {activeSection === 'experience' && (
+          <div className="p-5 space-y-5 animate-fadeIn">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-xl shadow-md">
+                  💼
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Experience</h3>
+                  {data.experience && (
+                    <span className="px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">
+                      {data.experience.length} {data.experience.length === 1 ? 'position' : 'positions'}
+                    </span>
+                  )}
+                  <p className="text-xs text-gray-500">Your work history and achievements</p>
+                </div>
+              </div>
+              <Button 
+                size="sm" 
+                onClick={() => {
+                  const newExperience = {
+                    id: `exp-${Date.now()}`,
+                    title: 'Job Title',
+                    company: 'Company Name',
+                    location: 'City, State',
+                    startDate: 'Jan 2020',
+                    endDate: 'Present',
+                    description: 'Brief description of your role and responsibilities.',
+                    achievements: []
+                  }
+                  onDataChange({
+                    ...data,
+                    experience: [...(data.experience || []), newExperience]
+                  })
+                }}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              >
+                + Add
+              </Button>
+            </div>
+
+            {(!data.experience || data.experience.length === 0) ? (
+              <div className="text-center py-10 bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg border-2 border-dashed border-gray-300">
+                <span className="text-4xl mb-2 block">💼</span>
+                <p className="text-gray-700 font-medium mb-2">No experience yet</p>
+                <p className="text-xs text-gray-500 mb-3">Add your work experience to showcase your career</p>
+                <Button 
+                  size="sm" 
+                  onClick={() => {
+                    const newExperience = {
+                      id: `exp-${Date.now()}`,
+                      title: 'Job Title',
+                      company: 'Company Name',
+                      location: 'City, State',
+                      startDate: 'Jan 2020',
+                      endDate: 'Present',
+                      description: 'Brief description of your role and responsibilities.',
+                      achievements: []
+                    }
+                    onDataChange({
+                      ...data,
+                      experience: [newExperience]
+                    })
+                  }}
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600"
+                >
+                  Add Your First Position
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {data.experience.map((exp, index) => (
+                  <div key={exp.id} className="border border-gray-200 rounded-lg p-4 bg-white">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <Input
+                          value={exp.title}
+                          onChange={(e) => {
+                            const newExperience = [...(data.experience || [])]
+                            newExperience[index] = { ...exp, title: e.target.value }
+                            onDataChange({ ...data, experience: newExperience })
+                          }}
+                          placeholder="Job Title"
+                          className="font-semibold mb-2"
+                        />
+                        <Input
+                          value={exp.company}
+                          onChange={(e) => {
+                            const newExperience = [...(data.experience || [])]
+                            newExperience[index] = { ...exp, company: e.target.value }
+                            onDataChange({ ...data, experience: newExperience })
+                          }}
+                          placeholder="Company Name"
+                          className="mb-2"
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          const newExperience = (data.experience || []).filter((_, i) => i !== index)
+                          onDataChange({ ...data, experience: newExperience })
+                        }}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <Input
+                        value={exp.location || ''}
+                        onChange={(e) => {
+                          const newExperience = [...(data.experience || [])]
+                          newExperience[index] = { ...exp, location: e.target.value }
+                          onDataChange({ ...data, experience: newExperience })
+                        }}
+                        placeholder="Location"
+                        className="text-sm"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          value={exp.startDate}
+                          onChange={(e) => {
+                            const newExperience = [...(data.experience || [])]
+                            newExperience[index] = { ...exp, startDate: e.target.value }
+                            onDataChange({ ...data, experience: newExperience })
+                          }}
+                          placeholder="Start Date"
+                          className="text-sm"
+                        />
+                        <Input
+                          value={exp.endDate || ''}
+                          onChange={(e) => {
+                            const newExperience = [...(data.experience || [])]
+                            newExperience[index] = { ...exp, endDate: e.target.value }
+                            onDataChange({ ...data, experience: newExperience })
+                          }}
+                          placeholder="End Date"
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <Textarea
+                      value={exp.description || ''}
+                      onChange={(e) => {
+                        const newExperience = [...(data.experience || [])]
+                        newExperience[index] = { ...exp, description: e.target.value }
+                        onDataChange({ ...data, experience: newExperience })
+                      }}
+                      placeholder="Describe your role and responsibilities..."
+                      rows={3}
+                      className="mb-3"
+                    />
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-gray-700">Key Achievements</Label>
+                      {(exp.achievements || []).map((achievement, achIndex) => (
+                        <div key={achIndex} className="flex gap-2">
+                          <Input
+                            value={achievement}
+                            onChange={(e) => {
+                              const newExperience = [...(data.experience || [])]
+                              const newAchievements = [...(exp.achievements || [])]
+                              newAchievements[achIndex] = e.target.value
+                              newExperience[index] = { ...exp, achievements: newAchievements }
+                              onDataChange({ ...data, experience: newExperience })
+                            }}
+                            placeholder="Achievement or accomplishment"
+                            className="text-sm"
+                          />
+                          <button
+                            onClick={() => {
+                              const newExperience = [...(data.experience || [])]
+                              const newAchievements = (exp.achievements || []).filter((_, i) => i !== achIndex)
+                              newExperience[index] = { ...exp, achievements: newAchievements }
+                              onDataChange({ ...data, experience: newExperience })
+                            }}
+                            className="w-8 h-8 flex items-center justify-center rounded text-red-500 hover:bg-red-50"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const newExperience = [...(data.experience || [])]
+                          newExperience[index] = {
+                            ...exp,
+                            achievements: [...(exp.achievements || []), 'New achievement']
+                          }
+                          onDataChange({ ...data, experience: newExperience })
+                        }}
+                        className="text-xs"
+                      >
+                        + Add Achievement
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Education Section */}
+        {activeSection === 'education' && (
+          <div className="p-5 space-y-5 animate-fadeIn">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-xl shadow-md">
+                  🎓
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Education</h3>
+                  {data.education && (
+                    <span className="px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full">
+                      {data.education.length} {data.education.length === 1 ? 'degree' : 'degrees'}
+                    </span>
+                  )}
+                  <p className="text-xs text-gray-500">Your educational background</p>
+                </div>
+              </div>
+              <Button 
+                size="sm" 
+                onClick={() => {
+                  const newEducation = {
+                    id: `edu-${Date.now()}`,
+                    degree: 'Degree Name',
+                    school: 'School Name',
+                    location: 'City, State',
+                    startDate: '2016',
+                    endDate: '2020',
+                    gpa: '',
+                    description: ''
+                  }
+                  onDataChange({
+                    ...data,
+                    education: [...(data.education || []), newEducation]
+                  })
+                }}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+              >
+                + Add
+              </Button>
+            </div>
+
+            {(!data.education || data.education.length === 0) ? (
+              <div className="text-center py-10 bg-gradient-to-br from-gray-50 to-purple-50 rounded-lg border-2 border-dashed border-gray-300">
+                <span className="text-4xl mb-2 block">🎓</span>
+                <p className="text-gray-700 font-medium mb-2">No education yet</p>
+                <p className="text-xs text-gray-500 mb-3">Add your educational background</p>
+                <Button 
+                  size="sm" 
+                  onClick={() => {
+                    const newEducation = {
+                      id: `edu-${Date.now()}`,
+                      degree: 'Degree Name',
+                      school: 'School Name',
+                      location: 'City, State',
+                      startDate: '2016',
+                      endDate: '2020',
+                      gpa: '',
+                      description: ''
+                    }
+                    onDataChange({
+                      ...data,
+                      education: [newEducation]
+                    })
+                  }}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600"
+                >
+                  Add Your First Degree
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {data.education.map((edu, index) => (
+                  <div key={edu.id} className="border border-gray-200 rounded-lg p-4 bg-white">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <Input
+                          value={edu.degree}
+                          onChange={(e) => {
+                            const newEducation = [...(data.education || [])]
+                            newEducation[index] = { ...edu, degree: e.target.value }
+                            onDataChange({ ...data, education: newEducation })
+                          }}
+                          placeholder="Degree Name (e.g., Bachelor of Science in Computer Science)"
+                          className="font-semibold mb-2"
+                        />
+                        <Input
+                          value={edu.school}
+                          onChange={(e) => {
+                            const newEducation = [...(data.education || [])]
+                            newEducation[index] = { ...edu, school: e.target.value }
+                            onDataChange({ ...data, education: newEducation })
+                          }}
+                          placeholder="School/University Name"
+                          className="mb-2"
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          const newEducation = (data.education || []).filter((_, i) => i !== index)
+                          onDataChange({ ...data, education: newEducation })
+                        }}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      <Input
+                        value={edu.location || ''}
+                        onChange={(e) => {
+                          const newEducation = [...(data.education || [])]
+                          newEducation[index] = { ...edu, location: e.target.value }
+                          onDataChange({ ...data, education: newEducation })
+                        }}
+                        placeholder="Location"
+                        className="text-sm"
+                      />
+                      <Input
+                        value={edu.startDate}
+                        onChange={(e) => {
+                          const newEducation = [...(data.education || [])]
+                          newEducation[index] = { ...edu, startDate: e.target.value }
+                          onDataChange({ ...data, education: newEducation })
+                        }}
+                        placeholder="Start Year"
+                        className="text-sm"
+                      />
+                      <Input
+                        value={edu.endDate}
+                        onChange={(e) => {
+                          const newEducation = [...(data.education || [])]
+                          newEducation[index] = { ...edu, endDate: e.target.value }
+                          onDataChange({ ...data, education: newEducation })
+                        }}
+                        placeholder="End Year"
+                        className="text-sm"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <Input
+                        value={edu.gpa || ''}
+                        onChange={(e) => {
+                          const newEducation = [...(data.education || [])]
+                          newEducation[index] = { ...edu, gpa: e.target.value }
+                          onDataChange({ ...data, education: newEducation })
+                        }}
+                        placeholder="GPA (optional)"
+                        className="text-sm"
+                      />
+                    </div>
+
+                    <Textarea
+                      value={edu.description || ''}
+                      onChange={(e) => {
+                        const newEducation = [...(data.education || [])]
+                        newEducation[index] = { ...edu, description: e.target.value }
+                        onDataChange({ ...data, education: newEducation })
+                      }}
+                      placeholder="Additional details (honors, relevant coursework, etc.)"
+                      rows={2}
+                    />
+                  </div>
+                ))}
               </div>
             )}
           </div>
