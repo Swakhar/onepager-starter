@@ -185,7 +185,7 @@ export const SmartSectionGenerator: React.FC<SmartSectionGeneratorProps> = ({
                         !type.supported
                           ? 'opacity-40 cursor-not-allowed bg-gray-50'
                           : sectionType === type.value
-                          ? 'border-green-600 bg-green-50 cursor-pointer'
+                          ? 'border-green-600 bg-green-500 cursor-pointer'
                           : 'border-gray-200 hover:border-green-300 hover:bg-gray-50 cursor-pointer'
                       }`}
                       title={!type.supported ? 'Not available in current template' : ''}
@@ -210,7 +210,7 @@ export const SmartSectionGenerator: React.FC<SmartSectionGeneratorProps> = ({
                           <span className="text-xs text-gray-400">🔒</span>
                         )}
                       </div>
-                      <p className={`text-xs ${type.supported ? 'text-gray-600' : 'text-gray-400'}`}>
+                      <p className={`text-xs ${type.supported ? 'text-white' : 'text-gray-400'}`}>
                         {type.description}
                       </p>
                     </div>

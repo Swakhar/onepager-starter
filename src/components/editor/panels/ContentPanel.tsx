@@ -5,6 +5,8 @@ import { ImageUpload } from '@/components/ui/ImageUpload'
 import { AIAssistant } from '@/components/editor/AIAssistant'
 import { ImageSuggestions } from '@/components/editor/ImageSuggestions'
 import { SmartSectionGenerator } from '@/components/editor/SmartSectionGenerator'
+import { ColorPicker } from '@/components/editor/controls/ColorPicker'
+import { SectionOrderManager } from '@/components/editor/SectionOrderManager'
 import { TemplateData, HeroData, AboutData, ContactData, ProjectData, SkillData } from '@/types/template'
 
 interface ContentPanelProps {
@@ -13,7 +15,7 @@ interface ContentPanelProps {
   templateId?: string
 }
 
-type Section = 'hero' | 'about' | 'projects' | 'skills' | 'contact' | 'social' | 'services' | 'features' | 'testimonials'
+type Section = 'hero' | 'about' | 'projects' | 'skills' | 'contact' | 'social' | 'services' | 'features' | 'testimonials' | 'layout'
 
 export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, templateId = 'modern-portfolio' }) => {
   const [activeSection, setActiveSection] = useState<Section>('hero')
@@ -355,6 +357,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
   }
 
   const sections: { id: Section; label: string; icon: string }[] = [
+    { id: 'layout', label: 'Layout', icon: '📐' },
     { id: 'hero', label: 'Hero', icon: '🎯' },
     { id: 'about', label: 'About', icon: '👤' },
     { id: 'projects', label: 'Projects', icon: '💼' },
@@ -368,13 +371,16 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
 
   // Define which sections each template supports
   const templateSupportedSections: Record<string, Section[]> = {
-    'modern-portfolio': ['hero', 'about', 'projects', 'services', 'features', 'testimonials', 'contact', 'social'],
-    'business-card': ['hero', 'about', 'skills', 'services', 'features', 'testimonials', 'contact', 'social'],
-    'creative-resume': ['hero', 'about', 'projects', 'skills', 'services', 'features', 'testimonials', 'contact', 'social'],
+    'modern-portfolio': ['layout', 'hero', 'about', 'projects', 'services', 'features', 'testimonials', 'contact', 'social'],
+    'business-card': ['layout', 'hero', 'about', 'skills', 'services', 'features', 'testimonials', 'contact', 'social'],
+    'creative-resume': ['layout', 'hero', 'about', 'projects', 'skills', 'services', 'features', 'testimonials', 'contact', 'social'],
   }
 
   // Filter sections based on template AND whether content exists
   const visibleSections = sections.filter(section => {
+    // Layout section is always visible
+    if (section.id === 'layout') return true
+    
     // First check if template supports this section
     const isTemplateSupported = templateSupportedSections[templateId]?.includes(section.id) ?? true
     
@@ -1119,7 +1125,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
                 <p className="text-xs text-gray-500 mt-1.5">🌍 City, State/Region is usually enough</p>
               </div>
 
-              <div className="p-4 bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-lg">
+              <div className="p-4 bg-gradient-to-r from-green-500 to-teal-500 border border-green-200 rounded-lg">
                 <div className="flex items-start gap-2">
                   <span className="text-lg">💡</span>
                   <div className="flex-1">
@@ -1319,6 +1325,102 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
                   />
                 </div>
 
+                {/* Section-Specific Colors */}
+                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🎨</span>
+                      <h4 className="text-sm font-bold !text-gray-900">Section Colors (Optional)</h4>
+                    </div>
+                  </div>
+                  <p className="text-xs text-purple-700 mb-4">
+                    Override global colors for this section only. Leave empty to use global colors.
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <ColorPicker
+                      label="Primary"
+                      value={data.services?.colors?.primary || data.colorScheme?.primary}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        services: {
+                          ...data.services!,
+                          colors: { ...(data.services?.colors || {}), primary: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Secondary"
+                      value={data.services?.colors?.secondary || data.colorScheme?.secondary}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        services: {
+                          ...data.services!,
+                          colors: { ...(data.services?.colors || {}), secondary: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Background"
+                      value={data.services?.colors?.background || data.colorScheme?.background}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        services: {
+                          ...data.services!,
+                          colors: { ...(data.services?.colors || {}), background: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Accent"
+                      value={data.services?.colors?.accent || data.colorScheme?.accent}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        services: {
+                          ...data.services!,
+                          colors: { ...(data.services?.colors || {}), accent: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Text (Title)"
+                      value={data.services?.colors?.text || data.colorScheme?.text}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        services: {
+                          ...data.services!,
+                          colors: { ...(data.services?.colors || {}), text: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Text (Secondary)"
+                      value={data.services?.colors?.textSecondary || data.colorScheme?.textSecondary}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        services: {
+                          ...data.services!,
+                          colors: { ...(data.services?.colors || {}), textSecondary: color }
+                        }
+                      })}
+                    />
+                  </div>
+                  
+                  {data.services?.colors && Object.keys(data.services.colors).length > 0 && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => onDataChange({
+                        ...data,
+                        services: { ...data.services!, colors: undefined }
+                      })}
+                      className="mt-3 w-full text-xs"
+                    >
+                      🔄 Reset to Global Colors
+                    </Button>
+                  )}
+                </div>
+
                 <div className="pt-4 border-t border-gray-200">
                   <h4 className="text-sm font-bold text-gray-900 mb-3">Service Items</h4>
                   <div className="space-y-3">
@@ -1440,6 +1542,102 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
                     })}
                     placeholder="What makes us special"
                   />
+                </div>
+
+                {/* Section-Specific Colors */}
+                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🎨</span>
+                      <h4 className="text-sm font-bold text-gray-900">Section Colors (Optional)</h4>
+                    </div>
+                  </div>
+                  <p className="text-xs text-purple-700 mb-4">
+                    Override global colors for this section only. Leave empty to use global colors.
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <ColorPicker
+                      label="Primary"
+                      value={data.features?.colors?.primary || data.colorScheme?.primary}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        features: {
+                          ...data.features!,
+                          colors: { ...(data.features?.colors || {}), primary: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Secondary"
+                      value={data.features?.colors?.secondary || data.colorScheme?.secondary}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        features: {
+                          ...data.features!,
+                          colors: { ...(data.features?.colors || {}), secondary: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Background"
+                      value={data.features?.colors?.background || data.colorScheme?.background}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        features: {
+                          ...data.features!,
+                          colors: { ...(data.features?.colors || {}), background: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Accent"
+                      value={data.features?.colors?.accent || data.colorScheme?.accent}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        features: {
+                          ...data.features!,
+                          colors: { ...(data.features?.colors || {}), accent: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Text (Title)"
+                      value={data.features?.colors?.text || data.colorScheme?.text}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        features: {
+                          ...data.features!,
+                          colors: { ...(data.features?.colors || {}), text: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Text (Secondary)"
+                      value={data.features?.colors?.textSecondary || data.colorScheme?.textSecondary}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        features: {
+                          ...data.features!,
+                          colors: { ...(data.features?.colors || {}), textSecondary: color }
+                        }
+                      })}
+                    />
+                  </div>
+                  
+                  {data.features?.colors && Object.keys(data.features.colors).length > 0 && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => onDataChange({
+                        ...data,
+                        features: { ...data.features!, colors: undefined }
+                      })}
+                      className="mt-3 w-full text-xs"
+                    >
+                      🔄 Reset to Global Colors
+                    </Button>
+                  )}
                 </div>
 
                 <div className="pt-4 border-t border-gray-200">
@@ -1564,6 +1762,102 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
                   />
                 </div>
 
+                {/* Section-Specific Colors */}
+                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🎨</span>
+                      <h4 className="text-sm font-bold !text-gray-900">Section Colors (Optional)</h4>
+                    </div>
+                  </div>
+                  <p className="text-xs text-purple-700 mb-4">
+                    Override global colors for this section only. Leave empty to use global colors.
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <ColorPicker
+                      label="Primary"
+                      value={data.testimonials?.colors?.primary || data.colorScheme?.primary}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        testimonials: {
+                          ...data.testimonials!,
+                          colors: { ...(data.testimonials?.colors || {}), primary: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Secondary"
+                      value={data.testimonials?.colors?.secondary || data.colorScheme?.secondary}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        testimonials: {
+                          ...data.testimonials!,
+                          colors: { ...(data.testimonials?.colors || {}), secondary: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Background"
+                      value={data.testimonials?.colors?.background || data.colorScheme?.background}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        testimonials: {
+                          ...data.testimonials!,
+                          colors: { ...(data.testimonials?.colors || {}), background: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Accent"
+                      value={data.testimonials?.colors?.accent || data.colorScheme?.accent}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        testimonials: {
+                          ...data.testimonials!,
+                          colors: { ...(data.testimonials?.colors || {}), accent: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Text (Title)"
+                      value={data.testimonials?.colors?.text || data.colorScheme?.text}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        testimonials: {
+                          ...data.testimonials!,
+                          colors: { ...(data.testimonials?.colors || {}), text: color }
+                        }
+                      })}
+                    />
+                    <ColorPicker
+                      label="Text (Secondary)"
+                      value={data.testimonials?.colors?.textSecondary || data.colorScheme?.textSecondary}
+                      onChange={(color) => onDataChange({
+                        ...data,
+                        testimonials: {
+                          ...data.testimonials!,
+                          colors: { ...(data.testimonials?.colors || {}), textSecondary: color }
+                        }
+                      })}
+                    />
+                  </div>
+                  
+                  {data.testimonials?.colors && Object.keys(data.testimonials.colors).length > 0 && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => onDataChange({
+                        ...data,
+                        testimonials: { ...data.testimonials!, colors: undefined }
+                      })}
+                      className="mt-3 w-full text-xs"
+                    >
+                      🔄 Reset to Global Colors
+                    </Button>
+                  )}
+                </div>
+
                 <div className="pt-4 border-t border-gray-200">
                   <h4 className="text-sm font-bold text-gray-900 mb-3">Testimonial Items</h4>
                   <div className="space-y-3">
@@ -1659,6 +1953,17 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Layout Section - Section Reordering */}
+        {activeSection === 'layout' && (
+          <div className="p-5 animate-fadeIn">
+            <SectionOrderManager 
+              data={data} 
+              onDataChange={onDataChange} 
+              templateId={templateId}
+            />
           </div>
         )}
       </div>

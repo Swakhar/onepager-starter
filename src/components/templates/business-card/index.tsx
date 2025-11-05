@@ -13,18 +13,14 @@ interface BusinessCardProps {
 const BusinessCard: React.FC<BusinessCardProps> = ({ data, colors, fonts }) => {
   const { hero, about, contact, social, skills, services, features, testimonials } = data
 
-  return (
-    <div
-      className="min-h-screen"
-      style={{
-        backgroundColor: colors.background,
-        color: colors.text,
-        fontFamily: fonts.body,
-      }}
-    >
-      {/* Hero/Profile Section - Centered Card */}
-      {hero && (
-        <section className="min-h-screen flex items-center justify-center px-4 py-12">
+  // Default section order
+  const defaultSectionOrder = ['hero', 'skills', 'about', 'services', 'features', 'testimonials']
+  const sectionOrder = data.sectionOrder || defaultSectionOrder
+
+  // Map section IDs to their components
+  const sectionComponents: Record<string, (isAlternate: boolean) => React.ReactNode> = {
+    hero: (isAlternate) => hero ? (
+      <section key="hero" className="min-h-screen flex items-center justify-center px-4 py-12" style={{ backgroundColor: isAlternate ? colors.backgroundAlt : colors.background }}>
           <div className="max-w-4xl w-full">
             <div
               className="rounded-3xl shadow-2xl overflow-hidden"
@@ -201,102 +197,131 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ data, colors, fonts }) => {
             </div>
           </div>
         </section>
-      )}
+    ) : null,
 
-      {/* Skills Section */}
-      {skills && skills.length > 0 && (
-        <section className="py-20 px-4">
-          <div className="max-w-4xl mx-auto">
-            <h2
-              className="text-3xl md:text-4xl font-bold text-center mb-12"
-              style={{
-                fontFamily: fonts.heading,
-                fontSize: fonts.headingSizes.h2,
-                color: colors.primary,
-              }}
-            >
-              Skills & Expertise
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              {skills.map((skill) => (
-                <div
-                  key={skill.id}
-                  className="p-6 rounded-xl shadow-lg"
-                  style={{ backgroundColor: 'white' }}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h3
-                      className="text-lg font-semibold"
-                      style={{ color: colors.text }}
-                    >
-                      {skill.name}
-                    </h3>
-                    <span
-                      className="text-sm font-medium"
-                      style={{ color: colors.primary }}
-                    >
-                      {skill.level || 0}%
-                    </span>
-                  </div>
-                  <div
-                    className="h-2 rounded-full overflow-hidden"
-                    style={{ backgroundColor: colors.textSecondary + '20' }}
+    skills: (isAlternate) => skills && skills.length > 0 ? (
+      <section key="skills" className="py-20 px-4" style={{ backgroundColor: isAlternate ? colors.backgroundAlt : colors.background }}>
+        <div className="max-w-4xl mx-auto">
+          <h2
+            className="text-3xl md:text-4xl font-bold text-center mb-12"
+            style={{
+              fontFamily: fonts.heading,
+              fontSize: fonts.headingSizes.h2,
+              color: colors.primary,
+            }}
+          >
+            Skills & Expertise
+          </h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            {skills.map((skill) => (
+              <div
+                key={skill.id}
+                className="p-6 rounded-xl shadow-lg"
+                style={{ backgroundColor: 'white' }}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h3
+                    className="text-lg font-semibold"
+                    style={{ color: colors.text }}
                   >
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${skill.level || 0}%`,
-                        backgroundColor: colors.primary,
-                      }}
-                    />
-                  </div>
-                  {skill.category && (
-                    <p
-                      className="text-sm mt-2"
-                      style={{ color: colors.textSecondary }}
-                    >
-                      {skill.category}
-                    </p>
-                  )}
+                    {skill.name}
+                  </h3>
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: colors.primary }}
+                  >
+                    {skill.level || 0}%
+                  </span>
                 </div>
-              ))}
-            </div>
+                <div
+                  className="h-2 rounded-full overflow-hidden"
+                  style={{ backgroundColor: colors.textSecondary + '20' }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${skill.level || 0}%`,
+                      backgroundColor: colors.primary,
+                    }}
+                  />
+                </div>
+                {skill.category && (
+                  <p
+                    className="text-sm mt-2"
+                    style={{ color: colors.textSecondary }}
+                  >
+                    {skill.category}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
-        </section>
-      )}
+        </div>
+      </section>
+    ) : null,
 
-      {/* About Section */}
-      {about && (
-        <section className="py-20 px-4" style={{ backgroundColor: colors.primary + '10' }}>
-          <div className="max-w-4xl mx-auto text-center">
-            <h2
-              className="text-3xl md:text-4xl font-bold mb-6"
-              style={{
-                fontFamily: fonts.heading,
-                fontSize: fonts.headingSizes.h2,
-                color: colors.primary,
-              }}
-            >
-              {about.title}
-            </h2>
-            <p
-              className="text-lg md:text-xl leading-relaxed max-w-2xl mx-auto"
-              style={{ color: colors.textSecondary }}
-            >
-              {about.description}
-            </p>
-          </div>
-        </section>
-      )}
+    about: (isAlternate) => about ? (
+      <section key="about" className="py-20 px-4" style={{ backgroundColor: isAlternate ? colors.backgroundAlt : colors.background }}>
+        <div className="max-w-4xl mx-auto text-center">
+          <h2
+            className="text-3xl md:text-4xl font-bold mb-6"
+            style={{
+              fontFamily: fonts.heading,
+              fontSize: fonts.headingSizes.h2,
+              color: colors.primary,
+            }}
+          >
+            {about.title}
+          </h2>
+          <p
+            className="text-lg md:text-xl leading-relaxed max-w-2xl mx-auto"
+            style={{ color: colors.textSecondary }}
+          >
+            {about.description}
+          </p>
+        </div>
+      </section>
+    ) : null,
 
-      {/* Services Section */}
-      {services && <Services data={services} colors={colors} fonts={fonts} />}
+    services: (isAlternate) => services && services.items && services.items.length > 0 ? (
+      <Services key="services" data={services} colors={isAlternate ? { ...colors, background: colors.backgroundAlt } : colors} fonts={fonts} />
+    ) : null,
 
-      {/* Features Section */}
-      {features && <Features data={features} colors={colors} fonts={fonts} />}
+    features: (isAlternate) => features && features.items && features.items.length > 0 ? (
+      <Features key="features" data={features} colors={isAlternate ? { ...colors, background: colors.backgroundAlt } : colors} fonts={fonts} />
+    ) : null,
 
-      {/* Testimonials Section */}
-      {testimonials && <Testimonials data={testimonials} colors={colors} fonts={fonts} />}
+    testimonials: (isAlternate) => testimonials && testimonials.items && testimonials.items.length > 0 ? (
+      <Testimonials key="testimonials" data={testimonials} colors={isAlternate ? { ...colors, background: colors.backgroundAlt } : colors} fonts={fonts} />
+    ) : null,
+  }
+
+  // Track alternation (hero doesn't count)
+  let alternateCount = 0
+
+  return (
+    <div
+      className="min-h-screen"
+      style={{
+        backgroundColor: colors.background,
+        color: colors.text,
+        fontFamily: fonts.body,
+      }}
+    >
+      {sectionOrder.map((sectionId) => {
+        const component = sectionComponents[sectionId]
+        if (!component) return null
+
+        // Determine if this section should use alternate background
+        const isAlternate = sectionId !== 'hero' && alternateCount % 2 === 1
+
+        // Increment counter for non-hero sections
+        if (sectionId !== 'hero') {
+          alternateCount++
+        }
+
+        return component(isAlternate)
+      })}
     </div>
   )
 }

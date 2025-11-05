@@ -23,6 +23,7 @@ export interface ColorScheme {
   secondary: string
   accent: string
   background: string
+  backgroundAlt: string // NEW: Alternate background for section differentiation
   text: string
   textSecondary: string
 }
@@ -52,6 +53,7 @@ export interface ServicesData {
   title: string
   subtitle?: string
   items: ServiceItem[]
+  colors?: Partial<ColorScheme> // Optional section-specific colors
 }
 
 export interface ServiceItem {
@@ -66,6 +68,7 @@ export interface FeaturesData {
   title: string
   subtitle?: string
   items: FeatureItem[]
+  colors?: Partial<ColorScheme> // Optional section-specific colors
 }
 
 export interface FeatureItem {
@@ -79,6 +82,7 @@ export interface TestimonialsData {
   title: string
   subtitle?: string
   items: TestimonialItem[]
+  colors?: Partial<ColorScheme> // Optional section-specific colors
 }
 
 export interface TestimonialItem {
@@ -103,6 +107,7 @@ export interface TemplateData {
   services?: ServicesData
   features?: FeaturesData
   testimonials?: TestimonialsData
+  sectionOrder?: string[] // NEW: Custom section order for drag-and-drop
   [key: string]: any // Allow custom sections
 }
 

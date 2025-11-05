@@ -79,6 +79,7 @@ export const DesignPanel: React.FC<DesignPanelProps> = ({
         secondary: generatedPalette.secondary,
         accent: generatedPalette.accent,
         background: generatedPalette.background,
+        backgroundAlt: generatedPalette.backgroundAlt || colors.backgroundAlt || generatedPalette.background,
         text: generatedPalette.text,
         textSecondary: colors.textSecondary, // Keep existing
       })
@@ -184,6 +185,14 @@ export const DesignPanel: React.FC<DesignPanelProps> = ({
             value={colors.background}
             onChange={(value) => handleColorChange('background', value)}
           />
+          <ColorPicker
+            label="Alternate Background"
+            value={colors.backgroundAlt || colors.background}
+            onChange={(value) => handleColorChange('backgroundAlt', value)}
+          />
+          <p className="text-xs text-gray-500 -mt-2 pl-1">
+            💡 Used for alternating section backgrounds to improve visual separation
+          </p>
           <ColorPicker
             label="Text Color"
             value={colors.text}

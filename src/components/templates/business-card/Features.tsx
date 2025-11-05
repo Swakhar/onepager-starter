@@ -9,12 +9,18 @@ interface FeaturesProps {
 }
 
 export const Features: React.FC<FeaturesProps> = ({ data, colors, fonts }) => {
+  // Merge section-specific colors with global colors
+  const sectionColors = {
+    ...colors,
+    ...data.colors, // Override with section-specific colors if they exist
+  }
+
   return (
     <section
       id="features"
       className="py-20 px-6 sm:px-8 lg:px-12"
       style={{
-        backgroundColor: `${colors.primary}10`,
+        backgroundColor: `${sectionColors.primary}10`,
         fontFamily: fonts.body,
       }}
     >
@@ -24,7 +30,7 @@ export const Features: React.FC<FeaturesProps> = ({ data, colors, fonts }) => {
           <h2
             className="text-4xl font-bold mb-4"
             style={{
-              color: colors.text,
+              color: sectionColors.text,
               fontFamily: fonts.heading,
             }}
           >
@@ -33,7 +39,7 @@ export const Features: React.FC<FeaturesProps> = ({ data, colors, fonts }) => {
           {data.subtitle && (
             <p
               className="text-xl max-w-2xl mx-auto"
-              style={{ color: colors.textSecondary }}
+              style={{ color: sectionColors.textSecondary }}
             >
               {data.subtitle}
             </p>
@@ -47,8 +53,8 @@ export const Features: React.FC<FeaturesProps> = ({ data, colors, fonts }) => {
               key={feature.id}
               className="group text-center p-6 rounded-xl transition-all duration-300 hover:shadow-lg"
               style={{
-                backgroundColor: colors.background,
-                border: `1px solid ${colors.primary}15`,
+                backgroundColor: sectionColors.background,
+                border: `1px solid ${sectionColors.primary}15`,
               }}
             >
               {feature.icon && (
@@ -61,7 +67,7 @@ export const Features: React.FC<FeaturesProps> = ({ data, colors, fonts }) => {
               <h3
                 className="text-lg font-bold mb-3"
                 style={{
-                  color: colors.text,
+                  color: sectionColors.text,
                   fontFamily: fonts.heading,
                 }}
               >
@@ -69,7 +75,7 @@ export const Features: React.FC<FeaturesProps> = ({ data, colors, fonts }) => {
               </h3>
               <p
                 className="text-sm leading-relaxed"
-                style={{ color: colors.textSecondary }}
+                style={{ color: sectionColors.textSecondary }}
               >
                 {feature.description}
               </p>

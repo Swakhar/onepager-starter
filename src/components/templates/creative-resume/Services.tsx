@@ -9,12 +9,18 @@ interface ServicesProps {
 }
 
 export const Services: React.FC<ServicesProps> = ({ data, colors, fonts }) => {
+  // Merge section-specific colors with global colors
+  const sectionColors = {
+    ...colors,
+    ...data.colors, // Override with section-specific colors if they exist
+  }
+
   return (
     <section
       id="services"
       className="py-20 px-6 sm:px-8 lg:px-12"
       style={{
-        backgroundColor: colors.background,
+        backgroundColor: sectionColors.background,
         fontFamily: fonts.body,
       }}
     >
@@ -24,7 +30,7 @@ export const Services: React.FC<ServicesProps> = ({ data, colors, fonts }) => {
           <h2
             className="text-4xl font-bold mb-4"
             style={{
-              color: colors.text,
+              color: sectionColors.text,
               fontFamily: fonts.heading,
             }}
           >
@@ -33,7 +39,7 @@ export const Services: React.FC<ServicesProps> = ({ data, colors, fonts }) => {
           {data.subtitle && (
             <p
               className="text-xl max-w-2xl mx-auto"
-              style={{ color: colors.textSecondary }}
+              style={{ color: sectionColors.textSecondary }}
             >
               {data.subtitle}
             </p>
@@ -47,8 +53,8 @@ export const Services: React.FC<ServicesProps> = ({ data, colors, fonts }) => {
               key={service.id}
               className="group p-8 rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-2"
               style={{
-                backgroundColor: colors.background,
-                border: `2px solid ${colors.primary}20`,
+                backgroundColor: sectionColors.background,
+                border: `2px solid ${sectionColors.primary}20`,
               }}
             >
               {service.icon && (
@@ -61,7 +67,7 @@ export const Services: React.FC<ServicesProps> = ({ data, colors, fonts }) => {
               <h3
                 className="text-2xl font-bold mb-4"
                 style={{
-                  color: colors.text,
+                  color: sectionColors.text,
                   fontFamily: fonts.heading,
                 }}
               >
@@ -69,7 +75,7 @@ export const Services: React.FC<ServicesProps> = ({ data, colors, fonts }) => {
               </h3>
               <p
                 className="mb-6 leading-relaxed"
-                style={{ color: colors.textSecondary }}
+                style={{ color: sectionColors.textSecondary }}
               >
                 {service.description}
               </p>
@@ -79,9 +85,9 @@ export const Services: React.FC<ServicesProps> = ({ data, colors, fonts }) => {
                     <li
                       key={idx}
                       className="flex items-start gap-2"
-                      style={{ color: colors.textSecondary }}
+                      style={{ color: sectionColors.textSecondary }}
                     >
-                      <span style={{ color: colors.primary }}>✓</span>
+                      <span style={{ color: sectionColors.primary }}>✓</span>
                       <span className="text-sm">{feature}</span>
                     </li>
                   ))}

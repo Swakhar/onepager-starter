@@ -13,6 +13,147 @@ interface CreativeResumeProps {
 const CreativeResume: React.FC<CreativeResumeProps> = ({ data, colors, fonts }) => {
   const { hero, about, experience, education, skills, projects, contact, social, services, features, testimonials } = data
 
+  // Default section order (after hero and sidebar)
+  const defaultSectionOrder = ['about', 'projects', 'services', 'features', 'testimonials']
+  const sectionOrder = data.sectionOrder || defaultSectionOrder
+
+  // Map section IDs to their components (for main content sections)
+  const sectionComponents: Record<string, (isAlternate: boolean) => React.ReactNode> = {
+    about: (isAlternate) => about ? (
+      <section key="about" className="py-20 px-4" style={{ backgroundColor: isAlternate ? colors.backgroundAlt : colors.background }}>
+        <div className="max-w-6xl mx-auto">
+          <h2
+            className="text-3xl font-bold mb-8 pb-3 border-b-2"
+            style={{
+              fontFamily: fonts.heading,
+              color: colors.primary,
+              borderColor: colors.primary,
+            }}
+          >
+            {about.title}
+          </h2>
+          <p
+            className="text-lg leading-relaxed max-w-4xl"
+            style={{ color: colors.textSecondary }}
+          >
+            {about.description}
+          </p>
+        </div>
+      </section>
+    ) : null,
+
+    projects: (isAlternate) => projects && projects.length > 0 ? (
+      <section key="projects" className="py-20 px-4" style={{ backgroundColor: isAlternate ? colors.backgroundAlt : colors.background }}>
+        <div className="max-w-6xl mx-auto">
+          <h2
+            className="text-3xl font-bold mb-12 pb-3 border-b-2"
+            style={{
+              fontFamily: fonts.heading,
+              color: colors.primary,
+              borderColor: colors.primary,
+            }}
+          >
+            Featured Projects
+          </h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            {projects.map((project) => (
+              <div
+                key={project.id}
+                className="rounded-xl overflow-hidden shadow-lg"
+                style={{ backgroundColor: 'white' }}
+              >
+                {project.image && (
+                  <div className="h-48 overflow-hidden">
+                    <img
+                      src={project.image}
+                      alt={project.title}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                )}
+                <div className="p-6">
+                  <h3
+                    className="text-xl font-bold mb-2"
+                    style={{
+                      fontFamily: fonts.heading,
+                      color: colors.text,
+                    }}
+                  >
+                    {project.title}
+                  </h3>
+                  <p
+                    className="mb-4"
+                    style={{ color: colors.textSecondary }}
+                  >
+                    {project.description}
+                  </p>
+                  {project.tags && project.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {project.tags.map((tag, i) => (
+                        <span
+                          key={i}
+                          className="px-3 py-1 text-xs font-medium rounded-full"
+                          style={{
+                            backgroundColor: colors.primary + '15',
+                            color: colors.primary,
+                          }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-3">
+                    {project.link && (
+                      <a
+                        href={project.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition text-white"
+                        style={{ backgroundColor: colors.primary }}
+                      >
+                        View Project →
+                      </a>
+                    )}
+                    {project.github && (
+                      <a
+                        href={project.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition"
+                        style={{
+                          backgroundColor: colors.textSecondary + '20',
+                          color: colors.text,
+                        }}
+                      >
+                        GitHub
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    ) : null,
+
+    services: (isAlternate) => services && services.items && services.items.length > 0 ? (
+      <Services key="services" data={services} colors={isAlternate ? { ...colors, background: colors.backgroundAlt } : colors} fonts={fonts} />
+    ) : null,
+
+    features: (isAlternate) => features && features.items && features.items.length > 0 ? (
+      <Features key="features" data={features} colors={isAlternate ? { ...colors, background: colors.backgroundAlt } : colors} fonts={fonts} />
+    ) : null,
+
+    testimonials: (isAlternate) => testimonials && testimonials.items && testimonials.items.length > 0 ? (
+      <Testimonials key="testimonials" data={testimonials} colors={isAlternate ? { ...colors, background: colors.backgroundAlt } : colors} fonts={fonts} />
+    ) : null,
+  }
+
+  // Track alternation
+  let alternateCount = 0
+
   return (
     <div
       className="min-h-screen"
@@ -448,14 +589,17 @@ const CreativeResume: React.FC<CreativeResumeProps> = ({ data, colors, fonts }) 
         </div>
       </div>
 
-      {/* Services Section */}
-      {services && <Services data={services} colors={colors} fonts={fonts} />}
+      {/* Dynamic Sections with Alternating Backgrounds */}
+      {sectionOrder.map((sectionId) => {
+        const component = sectionComponents[sectionId]
+        if (!component) return null
 
-      {/* Features Section */}
-      {features && <Features data={features} colors={colors} fonts={fonts} />}
+        // Determine if this section should use alternate background
+        const isAlternate = alternateCount % 2 === 1
+        alternateCount++
 
-      {/* Testimonials Section */}
-      {testimonials && <Testimonials data={testimonials} colors={colors} fonts={fonts} />}
+        return component(isAlternate)
+      })}
     </div>
   )
 }

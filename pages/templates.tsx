@@ -400,6 +400,7 @@ export default function TemplatesPage() {
             secondary: '#8b5cf6',
             accent: '#ec4899',
             background: '#ffffff',
+            backgroundAlt: '#f9fafb',
             text: '#111827',
             textSecondary: '#6b7280',
           }}
