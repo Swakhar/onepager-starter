@@ -13,6 +13,7 @@ import { SettingsPanel } from '@/components/editor/panels/SettingsPanel'
 import { SEOPanel } from '@/components/editor/panels/SEOPanel'
 import { AnalyticsPanel } from '@/components/editor/panels/AnalyticsPanel'
 import { ExportButtons } from '@/components/editor/ExportButtons'
+import { VisualAIBuilder } from '@/components/editor/VisualAIBuilder'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
 import { Site } from '@/types/site'
@@ -28,7 +29,7 @@ const ModernPortfolio = dynamic(() => import('@/components/templates/modern-port
 const BusinessCard = dynamic(() => import('@/components/templates/business-card'))
 const CreativeResume = dynamic(() => import('@/components/templates/creative-resume'))
 
-type EditorTab = 'content' | 'design' | 'settings' | 'seo' | 'analytics'
+type EditorTab = 'content' | 'design' | 'ai' | 'settings' | 'seo' | 'analytics'
 
 // Template component mapping
 const templateComponents: Record<string, React.ComponentType<{ data: TemplateData; colors: ColorScheme; fonts: FontScheme }>> = {
@@ -299,6 +300,7 @@ export default function EditorPage() {
               {[
                 { id: 'content', label: 'Content', icon: '📝' },
                 { id: 'design', label: 'Design', icon: '🎨' },
+                { id: 'ai', label: 'AI', icon: '✨' },
                 { id: 'settings', label: 'Settings', icon: '⚙️' },
                 { id: 'seo', label: 'SEO', icon: '🚀' },
                 { id: 'analytics', label: 'Analytics', icon: '📊' },
@@ -326,6 +328,7 @@ export default function EditorPage() {
               <span className="text-base">
                 {activeTab === 'content' && '📝'}
                 {activeTab === 'design' && '🎨'}
+                {activeTab === 'ai' && '✨'}
                 {activeTab === 'settings' && '⚙️'}
                 {activeTab === 'seo' && '🚀'}
                 {activeTab === 'analytics' && '📊'}
@@ -446,6 +449,7 @@ export default function EditorPage() {
                   {[
                     { id: 'content', label: 'Content', icon: '📝' },
                     { id: 'design', label: 'Design', icon: '🎨' },
+                    { id: 'ai', label: 'AI', icon: '✨' },
                     { id: 'settings', label: 'Settings', icon: '⚙️' },
                     { id: 'seo', label: 'SEO', icon: '🚀' },
                     { id: 'analytics', label: 'Analytics', icon: '📊' },
@@ -486,6 +490,42 @@ export default function EditorPage() {
                   onFontsChange={(fonts) =>
                     setSite({ ...site, settings: { ...site.settings, fonts } })
                   }
+                />
+              )}
+
+              {activeTab === 'ai' && (
+                <VisualAIBuilder
+                  currentData={site.data}
+                  currentColors={site.settings.colors}
+                  currentFonts={site.settings.fonts}
+                  onApplyChanges={(changes) => {
+                    const updates: any = {}
+                    if (changes.colors) {
+                      updates.settings = {
+                        ...site.settings,
+                        colors: changes.colors,
+                      }
+                    }
+                    if (changes.fonts) {
+                      updates.settings = {
+                        ...(updates.settings || site.settings),
+                        fonts: changes.fonts,
+                      }
+                    }
+                    if (changes.data) {
+                      updates.data = {
+                        ...site.data,
+                        ...changes.data,
+                      }
+                    }
+                    if (changes.sectionOrder) {
+                      updates.data = {
+                        ...(updates.data || site.data),
+                        sectionOrder: changes.sectionOrder,
+                      }
+                    }
+                    setSite({ ...site, ...updates })
+                  }}
                 />
               )}
 
