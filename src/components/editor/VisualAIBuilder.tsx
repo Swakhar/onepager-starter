@@ -1,7 +1,20 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { TemplateData, ColorScheme, FontScheme } from '@/types/template'
+
+interface CommandHistoryItem {
+  id: string
+  command: string
+  timestamp: Date
+  result: any
+}
+
+interface BeforeSnapshot {
+  colors: ColorScheme
+  fonts: FontScheme
+  data: TemplateData
+}
 
 interface VisualAIBuilderProps {
   currentData: TemplateData
@@ -42,6 +55,165 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
     layout: true,
     spacing: true,
   })
+
+  // Command History & Favorites state
+  const [commandHistory, setCommandHistory] = useState<CommandHistoryItem[]>([])
+  const [favoriteCommands, setFavoriteCommands] = useState<string[]>([])
+
+  // Before/After Comparison state
+  const [beforeSnapshot, setBeforeSnapshot] = useState<BeforeSnapshot | null>(null)
+  const [showComparison, setShowComparison] = useState(false)
+
+  // Voice Command state
+  const [isListening, setIsListening] = useState(false)
+  const [voiceSupported, setVoiceSupported] = useState(true)
+
+  // Check voice support on mount
+  useEffect(() => {
+    const supported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window
+    setVoiceSupported(supported)
+  }, [])
+
+  // Load history and favorites from localStorage on mount
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('ai-builder-history')
+    const savedFavorites = localStorage.getItem('ai-builder-favorites')
+    
+    if (savedHistory) {
+      try {
+        const parsed = JSON.parse(savedHistory)
+        // Convert timestamp strings back to Date objects
+        const historyWithDates = parsed.map((item: any) => ({
+          ...item,
+          timestamp: new Date(item.timestamp)
+        }))
+        setCommandHistory(historyWithDates)
+      } catch (e) {
+        console.error('Failed to load command history:', e)
+      }
+    }
+    
+    if (savedFavorites) {
+      try {
+        setFavoriteCommands(JSON.parse(savedFavorites))
+      } catch (e) {
+        console.error('Failed to load favorites:', e)
+      }
+    }
+  }, [])
+
+  // Save history to localStorage whenever it changes
+  useEffect(() => {
+    if (commandHistory.length > 0) {
+      localStorage.setItem('ai-builder-history', JSON.stringify(commandHistory))
+    }
+  }, [commandHistory])
+
+  // Save favorites to localStorage whenever they change
+  useEffect(() => {
+    if (favoriteCommands.length > 0) {
+      localStorage.setItem('ai-builder-favorites', JSON.stringify(favoriteCommands))
+    }
+  }, [favoriteCommands])
+
+  // Capture snapshot before applying changes
+  const captureSnapshot = useCallback(() => {
+    setBeforeSnapshot({
+      colors: currentColors,
+      fonts: currentFonts,
+      data: currentData,
+    })
+  }, [currentColors, currentFonts, currentData])
+
+  // Restore from snapshot
+  const restoreSnapshot = () => {
+    if (!beforeSnapshot) return
+    
+    onApplyChanges({
+      colors: beforeSnapshot.colors,
+      fonts: beforeSnapshot.fonts,
+      data: beforeSnapshot.data,
+    })
+    
+    alert('✅ Design restored to before AI changes')
+    setShowComparison(false)
+    setBeforeSnapshot(null)
+  }
+
+  // Add command to history
+  const addToHistory = useCallback((command: string, result: any) => {
+    const newItem: CommandHistoryItem = {
+      id: Date.now().toString(),
+      command,
+      timestamp: new Date(),
+      result,
+    }
+    
+    setCommandHistory(prev => [newItem, ...prev.slice(0, 49)]) // Keep last 50
+  }, [])
+
+  // Toggle favorite
+  const toggleFavorite = useCallback((command: string) => {
+    setFavoriteCommands(prev => {
+      if (prev.includes(command)) {
+        return prev.filter(c => c !== command)
+      } else {
+        return [...prev, command]
+      }
+    })
+  }, [])
+
+  // Voice command support
+  const startVoiceInput = useCallback(() => {
+    if (!voiceSupported) {
+      alert('⚠️ Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.')
+      return
+    }
+
+    // @ts-ignore - TypeScript doesn't recognize webkit prefix
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    const recognition = new SpeechRecognition()
+
+    recognition.continuous = false
+    recognition.interimResults = false
+    recognition.lang = 'en-US'
+
+    recognition.onstart = () => {
+      setIsListening(true)
+      setError(null)
+    }
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript
+      setCommand(transcript)
+      setIsListening(false)
+    }
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error)
+      setIsListening(false)
+      
+      if (event.error === 'no-speech') {
+        setError('No speech detected. Please try again.')
+      } else if (event.error === 'not-allowed') {
+        setError('Microphone access denied. Please allow microphone access in your browser settings.')
+      } else {
+        setError(`Voice recognition error: ${event.error}`)
+      }
+    }
+
+    recognition.onend = () => {
+      setIsListening(false)
+    }
+
+    try {
+      recognition.start()
+    } catch (error) {
+      console.error('Failed to start speech recognition:', error)
+      setIsListening(false)
+      setError('Failed to start voice recognition. Please try again.')
+    }
+  }, [voiceSupported])
 
   // Handle screenshot upload
   const handleScreenshotUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,6 +267,9 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
   const applyScreenshotDesign = () => {
     if (!result) return
 
+    // Capture snapshot before applying changes
+    captureSnapshot()
+
     const changes: any = {}
 
     if (result.colorPalette) {
@@ -126,6 +301,9 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
       return
     }
 
+    // Capture snapshot before making changes
+    captureSnapshot()
+
     setIsProcessing(true)
     setError(null)
 
@@ -149,6 +327,9 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
       }
 
       setResult(data)
+
+      // Add to history on success
+      addToHistory(command, data)
 
       // Auto-apply if changes are straightforward
       if (data.changes) {
@@ -280,6 +461,9 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
       return
     }
 
+    // Capture snapshot before applying changes
+    captureSnapshot()
+
     setIsProcessing(true)
     setError(null)
 
@@ -377,6 +561,9 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
       console.error('Invalid suggestion action:', suggestion)
       return
     }
+
+    // Capture snapshot before applying changes
+    captureSnapshot()
 
     try {
       const updates: any = {}
@@ -558,13 +745,44 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
             </div>
           </div>
 
-          <Textarea
-            value={command}
-            onChange={(e) => setCommand(e.target.value)}
-            placeholder="Describe what you want to change... (e.g., 'Make it look more modern with blue colors')"
-            rows={4}
-            className="w-full"
-          />
+          {/* Command Input with Voice Button */}
+          <div className="relative">
+            <Textarea
+              value={command}
+              onChange={(e) => setCommand(e.target.value)}
+              placeholder="Describe what you want to change... (or click the mic to speak)"
+              rows={4}
+              className="w-full pr-12"
+            />
+            
+            {/* Voice Input Button */}
+            {voiceSupported && (
+              <button
+                onClick={startVoiceInput}
+                disabled={isProcessing || isListening}
+                className={`absolute bottom-3 right-3 p-2 rounded-full transition-all ${
+                  isListening
+                    ? 'bg-red-500 text-white animate-pulse'
+                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed'
+                }`}
+                title={isListening ? 'Listening...' : 'Click to speak'}
+                type="button"
+              >
+                🎤
+              </button>
+            )}
+          </div>
+
+          {/* Listening Indicator */}
+          {isListening && (
+            <div className="text-center py-2 bg-red-50 border border-red-200 rounded-lg">
+              <span className="inline-flex items-center gap-2 text-sm text-red-600">
+                <span className="animate-pulse">🔴</span>
+                <span className="font-semibold">Listening... Speak now</span>
+              </span>
+              <p className="text-xs text-red-500 mt-1">Speak clearly and naturally</p>
+            </div>
+          )}
 
           <Button
             onClick={processCommand}
@@ -589,6 +807,80 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
                   </ul>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Command History Panel */}
+          {commandHistory.length > 0 && (
+            <div className="mt-4">
+              <details className="group">
+                <summary className="cursor-pointer text-sm font-semibold text-gray-700 hover:text-gray-900 flex items-center justify-between p-2 rounded hover:bg-gray-50">
+                  <span>📜 Command History ({commandHistory.length})</span>
+                  <span className="text-xs text-gray-500 group-open:hidden">Click to expand</span>
+                </summary>
+                <div className="mt-2 space-y-2 max-h-64 overflow-y-auto border rounded-lg p-2 bg-gray-50">
+                  {commandHistory.map((item) => (
+                    <div key={item.id} className="bg-white rounded p-3 text-xs border border-gray-200 hover:border-gray-300 transition-all">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="flex-1 text-gray-700 font-medium">"{item.command}"</p>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => {
+                              setCommand(item.command)
+                              window.scrollTo({ top: 0, behavior: 'smooth' })
+                            }}
+                            className="px-2 py-1 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded text-xs transition-all"
+                            title="Use this command"
+                          >
+                            ↻
+                          </button>
+                          <button
+                            onClick={() => toggleFavorite(item.command)}
+                            className={`px-2 py-1 rounded text-xs transition-all ${
+                              favoriteCommands.includes(item.command)
+                                ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                            title={favoriteCommands.includes(item.command) ? 'Remove from favorites' : 'Add to favorites'}
+                          >
+                            ★
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-gray-500 mt-1">
+                        {item.timestamp.toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            </div>
+          )}
+
+          {/* Favorites Panel */}
+          {favoriteCommands.length > 0 && (
+            <div className="mt-2">
+              <details className="group">
+                <summary className="cursor-pointer text-sm font-semibold text-gray-700 hover:text-gray-900 flex items-center justify-between p-2 rounded hover:bg-gray-50">
+                  <span>⭐ Favorite Commands ({favoriteCommands.length})</span>
+                  <span className="text-xs text-gray-500 group-open:hidden">Click to expand</span>
+                </summary>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {favoriteCommands.map((cmd, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setCommand(cmd)
+                        window.scrollTo({ top: 0, behavior: 'smooth' })
+                      }}
+                      className="px-3 py-2 bg-yellow-50 hover:bg-yellow-100 rounded-lg text-xs text-gray-700 border border-yellow-200 hover:border-yellow-300 transition-all flex items-center gap-2"
+                    >
+                      <span>⭐</span>
+                      <span>{cmd}</span>
+                    </button>
+                  ))}
+                </div>
+              </details>
             </div>
           )}
         </div>
@@ -977,6 +1269,223 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
               </Button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Before/After Comparison Toggle Button */}
+      {beforeSnapshot && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <button
+            onClick={() => setShowComparison(!showComparison)}
+            className="px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2 font-semibold"
+          >
+            {showComparison ? '✕ Close Comparison' : '⚡ Before/After'}
+          </button>
+        </div>
+      )}
+
+      {/* Before/After Comparison Modal */}
+      {showComparison && beforeSnapshot && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-6xl w-full max-h-[90vh] overflow-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold">Before/After Comparison</h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={restoreSnapshot}
+                    className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium transition-all"
+                  >
+                    ↺ Restore Before
+                  </button>
+                  <button
+                    onClick={() => setShowComparison(false)}
+                    className="text-gray-500 hover:text-gray-700 text-2xl px-2"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Before Column */}
+                <div>
+                  <h4 className="font-semibold mb-3 text-red-600 text-center">Before Changes</h4>
+                  <div className="border rounded-lg p-4 bg-gray-50 space-y-4">
+                    {/* Colors */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700 mb-2">🎨 Colors:</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="text-xs">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-6 h-6 rounded border" 
+                              style={{ backgroundColor: beforeSnapshot.colors.primary }}
+                            />
+                            <span className="text-gray-600">Primary</span>
+                          </div>
+                        </div>
+                        <div className="text-xs">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-6 h-6 rounded border" 
+                              style={{ backgroundColor: beforeSnapshot.colors.secondary }}
+                            />
+                            <span className="text-gray-600">Secondary</span>
+                          </div>
+                        </div>
+                        <div className="text-xs">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-6 h-6 rounded border" 
+                              style={{ backgroundColor: beforeSnapshot.colors.accent }}
+                            />
+                            <span className="text-gray-600">Accent</span>
+                          </div>
+                        </div>
+                        <div className="text-xs">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-6 h-6 rounded border" 
+                              style={{ backgroundColor: beforeSnapshot.colors.background }}
+                            />
+                            <span className="text-gray-600">Background</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Fonts */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700 mb-2">✏️ Fonts:</p>
+                      <div className="space-y-1 text-xs text-gray-600">
+                        <div>Heading: <span className="font-semibold">{beforeSnapshot.fonts.heading}</span></div>
+                        <div>Body: <span className="font-semibold">{beforeSnapshot.fonts.body}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Content Preview */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700 mb-2">📝 Hero Content:</p>
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <div className="truncate">Title: {beforeSnapshot.data.hero?.title || 'N/A'}</div>
+                        <div className="truncate">Subtitle: {beforeSnapshot.data.hero?.subtitle || 'N/A'}</div>
+                      </div>
+                    </div>
+
+                    {/* Section Order */}
+                    {beforeSnapshot.data.sectionOrder && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700 mb-2">📐 Section Order:</p>
+                        <div className="text-xs text-gray-600">
+                          {beforeSnapshot.data.sectionOrder.join(' → ')}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* After Column */}
+                <div>
+                  <h4 className="font-semibold mb-3 text-green-600 text-center">After AI Changes</h4>
+                  <div className="border rounded-lg p-4 bg-gray-50 space-y-4">
+                    {/* Colors */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700 mb-2">🎨 Colors:</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="text-xs">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-6 h-6 rounded border" 
+                              style={{ backgroundColor: currentColors.primary }}
+                            />
+                            <span className="text-gray-600">Primary</span>
+                          </div>
+                        </div>
+                        <div className="text-xs">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-6 h-6 rounded border" 
+                              style={{ backgroundColor: currentColors.secondary }}
+                            />
+                            <span className="text-gray-600">Secondary</span>
+                          </div>
+                        </div>
+                        <div className="text-xs">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-6 h-6 rounded border" 
+                              style={{ backgroundColor: currentColors.accent }}
+                            />
+                            <span className="text-gray-600">Accent</span>
+                          </div>
+                        </div>
+                        <div className="text-xs">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-6 h-6 rounded border" 
+                              style={{ backgroundColor: currentColors.background }}
+                            />
+                            <span className="text-gray-600">Background</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Fonts */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700 mb-2">✏️ Fonts:</p>
+                      <div className="space-y-1 text-xs text-gray-600">
+                        <div>Heading: <span className="font-semibold">{currentFonts.heading}</span></div>
+                        <div>Body: <span className="font-semibold">{currentFonts.body}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Content Preview */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700 mb-2">📝 Hero Content:</p>
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <div className="truncate">Title: {currentData.hero?.title || 'N/A'}</div>
+                        <div className="truncate">Subtitle: {currentData.hero?.subtitle || 'N/A'}</div>
+                      </div>
+                    </div>
+
+                    {/* Section Order */}
+                    {currentData.sectionOrder && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700 mb-2">📐 Section Order:</p>
+                        <div className="text-xs text-gray-600">
+                          {currentData.sectionOrder.join(' → ')}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Summary of Changes */}
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm font-semibold text-blue-900 mb-2">📊 Summary of Changes:</p>
+                <div className="text-xs text-blue-700 space-y-1">
+                  {beforeSnapshot.colors.primary !== currentColors.primary && (
+                    <div>✓ Primary color changed from {beforeSnapshot.colors.primary} to {currentColors.primary}</div>
+                  )}
+                  {beforeSnapshot.fonts.heading !== currentFonts.heading && (
+                    <div>✓ Heading font changed from {beforeSnapshot.fonts.heading} to {currentFonts.heading}</div>
+                  )}
+                  {beforeSnapshot.fonts.body !== currentFonts.body && (
+                    <div>✓ Body font changed from {beforeSnapshot.fonts.body} to {currentFonts.body}</div>
+                  )}
+                  {beforeSnapshot.data.hero?.title !== currentData.hero?.title && (
+                    <div>✓ Hero title updated</div>
+                  )}
+                  {JSON.stringify(beforeSnapshot.data.sectionOrder) !== JSON.stringify(currentData.sectionOrder) && (
+                    <div>✓ Section order rearranged</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
