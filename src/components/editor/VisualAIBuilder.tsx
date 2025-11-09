@@ -48,9 +48,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
   const [error, setError] = useState<string | null>(null)
   const [suggestions, setSuggestions] = useState<any[]>([])
   
-  // Style Transfer state
-  const [styleInputMode, setStyleInputMode] = useState<'url' | 'screenshot'>('screenshot')
-  const [styleReferenceUrl, setStyleReferenceUrl] = useState('')
+  // Style Transfer state - SIMPLIFIED: Only screenshot mode (URL input removed)
   const [styleReferenceScreenshot, setStyleReferenceScreenshot] = useState<string | null>(null)
   const [transferOptions, setTransferOptions] = useState({
     colors: true,
@@ -579,8 +577,8 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
 
   // Process style transfer
   const processStyleTransfer = async () => {
-    if (!styleReferenceUrl && !styleReferenceScreenshot) {
-      setError('Please provide a reference URL or upload a screenshot')
+    if (!styleReferenceScreenshot) {
+      setError('Please upload a reference screenshot')
       return
     }
 
@@ -591,17 +589,19 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
     setError(null)
 
     try {
+      // UPDATED: Use the same screenshot analysis approach
+      // This works for ANY website (not just popular ones)
       const response = await fetch('/api/ai/visual-builder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'style-transfer',
-          referenceStyle: styleReferenceScreenshot ? {
-            imageBase64: styleReferenceScreenshot.split(',')[1],
-          } : {
-            url: styleReferenceUrl,
-          },
+          imageBase64: styleReferenceScreenshot.split(',')[1], // Remove data:image/... prefix
           currentData,
+          currentTemplate: {
+            template: currentData?.template,
+            sectionOrder: currentSectionOrder,
+          },
           transferOptions,
         }),
       })
@@ -636,7 +636,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
 
       onApplyChanges(updates)
       setResult(data.updatedDesign)
-      alert('✨ Style transferred successfully! Check your preview.')
+      alert(`✨ Style transferred successfully!\n\n${data.updatedDesign.explanation || 'Check your preview.'}`)
     } catch (error: any) {
       setError(error.message)
     } finally {
@@ -698,6 +698,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
             ...currentColors,
             ...action.params,
           }
+          console.log('✅ Applying color changes:', action.params)
           break
 
         case 'apply-font':
@@ -706,38 +707,39 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
             ...currentFonts,
             heading: action.params.heading || currentFonts.heading,
             body: action.params.body || currentFonts.body,
+            headingSizes: currentFonts.headingSizes, // Preserve heading sizes
           }
+          console.log('✅ Applying font changes:', action.params)
           break
 
         case 'reorder-sections':
-          // Reorder sections
+          // FIXED: Pass sectionOrder separately, not inside data
           if (action.params.order && Array.isArray(action.params.order)) {
-            updates.data = {
-              ...currentData,
-              sectionOrder: action.params.order,
-            }
+            updates.sectionOrder = action.params.order
+            console.log('✅ Reordering sections:', action.params.order)
           }
           break
 
         case 'add-section':
-          // Add new section
+          // FIXED: Add to actualSectionOrder, not data.sectionOrder
           if (action.params.section) {
-            const currentOrder = currentData.sectionOrder || []
+            const currentOrder = actualSectionOrder || []
             if (!currentOrder.includes(action.params.section)) {
-              updates.data = {
-                ...currentData,
-                sectionOrder: [...currentOrder, action.params.section],
-              }
+              updates.sectionOrder = [...currentOrder, action.params.section]
+              console.log('✅ Adding section:', action.params.section)
+            } else {
+              console.log('ℹ️ Section already exists:', action.params.section)
             }
           }
           break
 
         case 'update-spacing':
-          // Update spacing
+          // Update spacing in data
           updates.data = {
             ...currentData,
             spacing: action.params.spacing,
           }
+          console.log('✅ Updating spacing:', action.params.spacing)
           break
 
         case 'update-content':
@@ -750,21 +752,24 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
                 ...action.params.changes,
               },
             }
+            console.log('✅ Updating content:', action.params.section, action.params.changes)
           }
           break
 
         default:
           alert(`❌ Action type "${action.type}" not yet implemented`)
+          console.error('Unsupported action type:', action.type)
           return
       }
 
       // Apply the changes
       onApplyChanges(updates)
       
-      // Show success message
-      alert(`✅ Applied: ${suggestion.title}`)
+      // Show success message with details
+      const changeType = action.type.replace('apply-', '').replace('-', ' ')
+      alert(`✅ Applied: ${suggestion.title}\n\n${suggestion.expectedImpact || 'Change applied successfully'}`)
       
-      // Optionally remove the suggestion from the list
+      // Remove the suggestion from the list
       setSuggestions(suggestions.filter(s => s.id !== suggestion.id))
     } catch (error: any) {
       console.error('Error applying suggestion:', error)
@@ -1175,63 +1180,38 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
             </p>
           </div>
 
-          {/* Tab selector: URL or Screenshot */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setStyleInputMode('url')}
-              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                styleInputMode === 'url'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-600'
-              }`}
-            >
-              � Website URL
-            </button>
-            <button
-              onClick={() => setStyleInputMode('screenshot')}
-              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                styleInputMode === 'screenshot'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-600'
-              }`}
-            >
-              📸 Screenshot
-            </button>
-          </div>
-
-          {/* URL Input */}
-          {styleInputMode === 'url' && (
-            <Input
-              value={styleReferenceUrl}
-              onChange={(e) => setStyleReferenceUrl(e.target.value)}
-              placeholder="https://example.com"
-              type="url"
-            />
-          )}
-
-          {/* Screenshot Upload */}
-          {styleInputMode === 'screenshot' && (
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+          {/* Screenshot Upload - SIMPLIFIED: Screenshot only, no URL input */}
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-2">
+              📸 Upload Reference Screenshot
+            </p>
+            <p className="text-xs text-gray-500 mb-3">
+              Take a screenshot of any website you like. Works for ANY site (popular or not)!
+            </p>
+            <div className="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center bg-purple-50">
               {styleReferenceScreenshot ? (
                 <div>
                   <img
                     src={styleReferenceScreenshot}
                     alt="Style reference"
-                    className="max-w-full max-h-32 mx-auto rounded mb-2"
+                    className="max-w-full max-h-32 mx-auto rounded mb-2 border-2 border-purple-200"
                   />
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => setStyleReferenceScreenshot(null)}
                   >
-                    Remove
+                    🗑️ Remove
                   </Button>
                 </div>
               ) : (
                 <label className="cursor-pointer">
-                  <div className="text-2xl mb-1">📸</div>
-                  <p className="text-sm font-medium text-gray-700">Upload reference screenshot</p>
+                  <div className="text-4xl mb-2">🎨</div>
+                  <p className="text-sm font-medium text-gray-700">Click to upload screenshot</p>
                   <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 10MB</p>
+                  <p className="text-xs text-purple-600 mt-2">
+                    ✨ Works for any website - not just popular ones!
+                  </p>
                   <input
                     type="file"
                     accept="image/*"
@@ -1248,7 +1228,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
                 </label>
               )}
             </div>
-          )}
+          </div>
 
           {/* Transfer Options */}
           <div className="bg-gray-50 rounded-lg p-3">
@@ -1277,7 +1257,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
 
           <Button
             onClick={processStyleTransfer}
-            disabled={isProcessing || (!styleReferenceUrl && !styleReferenceScreenshot)}
+            disabled={isProcessing || !styleReferenceScreenshot}
             className="w-full bg-gradient-to-r from-purple-600 to-pink-600"
           >
             {isProcessing ? '🔄 Transferring Style...' : '🎭 Transfer Style'}

@@ -5,6 +5,21 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+// CRITICAL: Increase body size limit to 10MB for image uploads
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+}
+
+// COST OPTIMIZATION NOTES:
+// - gpt-4o-mini: ~$0.01/image (10x cheaper than gpt-4o) - RECOMMENDED ✅
+// - detail: 'high' = better analysis (~$0.01), 'low' = ultra cheap (~$0.003) but less accurate
+// - For production with high traffic, consider 'low' detail or caching results
+// - Current config: gpt-4o-mini with 'high' detail = best balance of cost/quality
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -41,73 +56,86 @@ export default async function handler(
 async function analyzeScreenshot(req: NextApiRequest, res: NextApiResponse) {
   const { imageUrl, imageBase64, currentTemplate } = req.body
 
-  const prompt = `You are an expert web designer analyzing a website screenshot. Extract design elements AND provide intelligent adaptation recommendations.
+  const prompt = `You are an expert web designer analyzing a website screenshot for design inspiration. Your job is to extract visual design elements (colors, fonts, layout) from ANY website screenshot, regardless of its industry or purpose.
 
-CURRENT TEMPLATE INFO:
+CRITICAL INSTRUCTIONS:
+1. You MUST respond with ONLY valid JSON - no explanations before or after
+2. Analyze ANY website screenshot provided - restaurant, e-commerce, blog, portfolio, corporate, etc.
+3. Extract ONLY visual design elements (colors, fonts, spacing, layout style)
+4. The screenshot's industry/purpose can differ from the target template - that's expected and good!
+5. If you cannot see details clearly, make reasonable design estimates
+6. Your response must start with { and end with }
+7. NEVER refuse to analyze a website screenshot
+
+CURRENT TEMPLATE INFO (Target to apply design to):
 Template Type: ${currentTemplate?.template || 'modern-portfolio'}
 Current Sections: ${JSON.stringify(currentTemplate?.sectionOrder || [])}
 Template Purpose: ${getTemplatePurpose(currentTemplate?.template)}
 
-TASK: Analyze the screenshot and extract design elements. If the screenshot's purpose differs from the current template, provide adaptation strategies.
+EXAMPLES OF VALID CROSS-DOMAIN ANALYSIS:
+✓ Restaurant screenshot → Portfolio template: Extract warm colors, elegant fonts, keep portfolio structure
+✓ E-commerce screenshot → Portfolio template: Extract modern colors, clean layout, keep portfolio sections
+✓ Corporate screenshot → Portfolio template: Extract professional palette, formal typography, keep portfolio flow
+✓ Blog screenshot → Portfolio template: Extract readable fonts, content spacing, keep portfolio sections
 
-OUTPUT ONLY valid JSON:
+The screenshot and template type DON'T need to match - we're only extracting visual design inspiration!
+
+REQUIRED JSON OUTPUT FORMAT (copy this structure exactly):
 {
   "colorPalette": {
-    "primary": "#hexcode",
-    "secondary": "#hexcode",
-    "accent": "#hexcode",
-    "background": "#hexcode",
-    "backgroundAlt": "#hexcode",
-    "text": "#hexcode",
-    "textSecondary": "#hexcode"
+    "primary": "#3B82F6",
+    "secondary": "#8B5CF6",
+    "accent": "#EC4899",
+    "background": "#FFFFFF",
+    "backgroundAlt": "#F9FAFB",
+    "text": "#111827",
+    "textSecondary": "#6B7280"
   },
   "typography": {
-    "headingFont": "font-family name",
-    "bodyFont": "font-family name",
-    "style": "modern|elegant|minimal|bold|playful"
+    "headingFont": "Inter",
+    "bodyFont": "Inter",
+    "style": "modern"
   },
   "layout": {
-    "structure": "single-column|two-column|grid|masonry",
-    "spacing": "compact|normal|spacious",
-    "alignment": "left|center|right"
+    "structure": "single-column",
+    "spacing": "normal",
+    "alignment": "center"
   },
   "components": {
-    "hasHero": true|false,
-    "heroStyle": "full-screen|split|minimal|video",
-    "hasTestimonials": true|false,
-    "hasProjects": true|false,
-    "hasServices": true|false,
-    "ctaStyle": "button|link|banner"
+    "hasHero": true,
+    "heroStyle": "full-screen",
+    "hasTestimonials": false,
+    "hasProjects": true,
+    "hasServices": true,
+    "ctaStyle": "button"
   },
-  "mood": "professional|creative|corporate|friendly|luxury|playful",
-  "industry": "tech|design|business|education|ecommerce|restaurant|healthcare|other",
-  "description": "Brief description of the overall design style",
+  "mood": "professional",
+  "industry": "tech",
+  "description": "Clean modern design with blue accent colors",
   "screenshotPurpose": "portfolio|ecommerce|blog|saas|restaurant|corporate|other",
   "adaptationStrategy": {
-    "isCompatible": true|false,
-    "reasoning": "Why screenshot matches or differs from current template",
+    "isCompatible": true,
+    "reasoning": "Restaurant design has warm, inviting colors that can enhance portfolio's visual appeal",
     "recommendations": [
-      "Keep portfolio structure but apply e-commerce color scheme",
-      "Use spacious layout from screenshot",
-      "Adapt hero style to match screenshot"
+      "Apply warm color palette from restaurant to portfolio",
+      "Use elegant typography for headings",
+      "Keep portfolio section structure (hero, about, projects)",
+      "Add restaurant's welcoming mood to portfolio hero"
     ],
     "sectionsToKeep": ["hero", "about", "projects"],
-    "sectionsToAdd": ["services", "testimonials"],
+    "sectionsToAdd": [],
     "sectionsToRemove": [],
-    "contentGuidance": "How to adapt content from screenshot to current template"
+    "contentGuidance": "Apply visual design only - colors, fonts, spacing. Keep portfolio content and structure."
   }
 }
 
-ADAPTATION EXAMPLES:
-- If screenshot is e-commerce but template is portfolio → Extract visual style (colors, fonts), suggest keeping portfolio structure, recommend adding services/pricing sections
-- If screenshot is corporate but template is creative → Extract professional color palette, suggest minimal layout, keep creative sections
-- If screenshot matches template type → Apply design directly with high compatibility
+KEY POINT: Even if screenshot is a restaurant and template is portfolio, analyze it! Extract colors, fonts, and layout style. In adaptationStrategy, explain how to apply restaurant's visual design to portfolio template.
 
-Analyze the screenshot comprehensively.`
+IMPORTANT: Respond with ONLY the JSON object above. No markdown, no explanations, just the JSON.`
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4-vision-preview',
+      model: 'gpt-4o-mini', // COST-EFFECTIVE: ~$0.01 per image vs gpt-4o ~$0.10 (10x cheaper, still excellent quality)
       messages: [
         {
           role: 'user',
@@ -117,6 +145,7 @@ Analyze the screenshot comprehensively.`
               type: 'image_url',
               image_url: {
                 url: imageUrl || `data:image/jpeg;base64,${imageBase64}`,
+                detail: 'high', // 'high' for detailed analysis, 'low' for even cheaper but less detail
               },
             },
           ],
@@ -127,11 +156,46 @@ Analyze the screenshot comprehensively.`
 
     const content = completion.choices[0]?.message?.content || '{}'
     
-    // Extract JSON from potential markdown code blocks
-    const jsonMatch = content.match(/```json\n?([\s\S]*?)\n?```/) || content.match(/\{[\s\S]*\}/)
-    const jsonString = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : content
+    console.log('GPT-4o Response:', content.substring(0, 200)) // Log first 200 chars for debugging
     
-    const analysis = JSON.parse(jsonString.trim())
+    // Check if model refused to analyze (common responses)
+    if (content.toLowerCase().includes("i'm unable") || 
+        content.toLowerCase().includes("i cannot") ||
+        content.toLowerCase().includes("i can't") ||
+        content.toLowerCase().includes("i apologize")) {
+      console.error('GPT-4o refused to analyze:', content.substring(0, 500))
+      return res.status(400).json({ 
+        error: 'Image analysis failed', 
+        details: content.substring(0, 500),
+        suggestion: 'The AI had trouble analyzing this image. This could be due to:\n• Image quality or resolution issues\n• Unclear or obscured website content\n• Technical limitations\n\nTry:\n• Taking a clearer screenshot\n• Using a different browser/device\n• Capturing a different section of the website\n\nNote: Cross-domain analysis (e.g., restaurant → portfolio) is fully supported!'
+      })
+    }
+    
+    // Extract JSON from potential markdown code blocks or raw JSON
+    let jsonString = content
+    const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/)
+    const codeBlockMatch = content.match(/```\s*([\s\S]*?)\s*```/)
+    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    
+    if (jsonBlockMatch) {
+      jsonString = jsonBlockMatch[1]
+    } else if (codeBlockMatch) {
+      jsonString = codeBlockMatch[1]
+    } else if (jsonMatch) {
+      jsonString = jsonMatch[0]
+    }
+    
+    let analysis
+    try {
+      analysis = JSON.parse(jsonString.trim())
+    } catch (parseError) {
+      console.error('JSON Parse Error. Raw content:', content)
+      return res.status(500).json({ 
+        error: 'Failed to parse AI response', 
+        details: 'The AI returned an invalid format. This might be due to image content or format issues.',
+        rawResponse: content.substring(0, 500)
+      })
+    }
 
     return res.status(200).json({
       success: true,
@@ -154,35 +218,200 @@ function getTemplatePurpose(templateId?: string): string {
   return purposes[templateId || ''] || 'General purpose website'
 }
 
+// Helper functions for design auditing
+function checkColorContrast(colors: any): boolean {
+  // Simple heuristic: check if text and background have sufficient contrast
+  if (!colors.text || !colors.background) return false
+  
+  const textLuminance = getRelativeLuminance(colors.text)
+  const bgLuminance = getRelativeLuminance(colors.background)
+  const contrast = (Math.max(textLuminance, bgLuminance) + 0.05) / (Math.min(textLuminance, bgLuminance) + 0.05)
+  
+  return contrast < 4.5 // WCAG AA minimum for normal text
+}
+
+function getRelativeLuminance(hex: string): number {
+  // Convert hex to RGB
+  const rgb = parseInt(hex.replace('#', ''), 16)
+  const r = (rgb >> 16) & 0xff
+  const g = (rgb >> 8) & 0xff
+  const b = rgb & 0xff
+  
+  // Convert to relative luminance
+  const [rs, gs, bs] = [r, g, b].map(c => {
+    const val = c / 255
+    return val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4)
+  })
+  
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs
+}
+
+function checkFontReadability(fonts: any): boolean {
+  // Check if heading and body fonts are too similar or hard to read
+  if (!fonts.heading || !fonts.body) return true
+  
+  // Issue if same font for both (no hierarchy)
+  if (fonts.heading === fonts.body) return true
+  
+  // Issue if using difficult-to-read decorative fonts
+  const decorativeFonts = ['Comic Sans', 'Papyrus', 'Brush Script', 'Curlz']
+  return decorativeFonts.some(font => 
+    fonts.heading?.includes(font) || fonts.body?.includes(font)
+  )
+}
+
+function checkSectionOrder(sections: string[]): boolean {
+  // Check if section order follows best practices
+  if (!sections || sections.length === 0) return false
+  
+  // Best practice: Hero should be first
+  if (sections[0] !== 'hero') return true
+  
+  // Contact should typically be last
+  const contactIndex = sections.indexOf('contact')
+  if (contactIndex !== -1 && contactIndex < sections.length - 2) return true
+  
+  return false
+}
+
 // Transfer style from reference to current template
 async function styleTransfer(req: NextApiRequest, res: NextApiResponse) {
-  const { referenceStyle, currentData, transferOptions } = req.body
+  const { referenceStyle, currentData, transferOptions, imageUrl, imageBase64, currentTemplate } = req.body
 
-  const prompt = `You are a web design expert. A user wants to apply a design style to their website.
+  // IMPORTANT: Style transfer now uses the same screenshot analysis as analyzeScreenshot
+  // This ensures ANY website works (not just popular ones GPT knows about)
+  // 
+  // NOTE: URL input is NOT supported directly because:
+  // - AI models cannot browse/access external URLs
+  // - We would need server-side screenshot capture (requires puppeteer/playwright)
+  // 
+  // SOLUTION: Users should upload a screenshot of the reference website instead
+  // This works for ANY website (popular or unpopular) and is more reliable
+  
+  let designAnalysis: any = null
 
-REFERENCE STYLE:
-${JSON.stringify(referenceStyle, null, 2)}
+  // If screenshot is provided, analyze it first
+  if (imageUrl || imageBase64 || referenceStyle?.imageBase64) {
+    try {
+      // Use the same screenshot analysis logic
+      const screenshotPrompt = `You are an expert web designer analyzing a website screenshot for design inspiration. Extract ONLY visual design elements.
+
+CRITICAL INSTRUCTIONS:
+1. You MUST respond with ONLY valid JSON - no explanations
+2. Extract colors, fonts, spacing, layout style from the screenshot
+3. Your response must start with { and end with }
+
+REQUIRED JSON OUTPUT:
+{
+  "colorPalette": {
+    "primary": "#hex",
+    "secondary": "#hex",
+    "accent": "#hex",
+    "background": "#hex",
+    "backgroundAlt": "#hex",
+    "text": "#hex",
+    "textSecondary": "#hex"
+  },
+  "typography": {
+    "headingFont": "font-name",
+    "bodyFont": "font-name",
+    "style": "modern|elegant|minimal|bold"
+  },
+  "layout": {
+    "spacing": "compact|normal|spacious",
+    "alignment": "left|center|right"
+  },
+  "mood": "professional|creative|friendly|luxury",
+  "description": "Brief style description"
+}`
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini', // COST-EFFECTIVE: Same as analyzeScreenshot
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: screenshotPrompt },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: imageUrl || `data:image/jpeg;base64,${imageBase64 || referenceStyle?.imageBase64}`,
+                  detail: 'high',
+                },
+              },
+            ],
+          },
+        ],
+        max_tokens: 1000,
+      })
+
+      const content = completion.choices[0]?.message?.content || '{}'
+      
+      // Extract JSON (same logic as analyzeScreenshot)
+      let jsonString = content
+      const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/)
+      const codeBlockMatch = content.match(/```\s*([\s\S]*?)\s*```/)
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      
+      if (jsonBlockMatch) {
+        jsonString = jsonBlockMatch[1]
+      } else if (codeBlockMatch) {
+        jsonString = codeBlockMatch[1]
+      } else if (jsonMatch) {
+        jsonString = jsonMatch[0]
+      }
+
+      designAnalysis = JSON.parse(jsonString.trim())
+    } catch (error: any) {
+      console.error('Screenshot analysis failed in styleTransfer:', error)
+      return res.status(500).json({ 
+        error: 'Failed to analyze reference screenshot',
+        details: error.message 
+      })
+    }
+  } else if (referenceStyle) {
+    // If style object is already provided (from previous analysis)
+    designAnalysis = referenceStyle
+  } else {
+    return res.status(400).json({ 
+      error: 'No reference provided',
+      details: 'Please provide either a screenshot (imageUrl/imageBase64) or a pre-analyzed style object (referenceStyle)'
+    })
+  }
+
+  // Now apply the extracted style to current template
+  const applyPrompt = `You are a web design expert. Apply a reference design style to the user's website while preserving their content.
+
+REFERENCE DESIGN STYLE:
+${JSON.stringify(designAnalysis, null, 2)}
 
 CURRENT WEBSITE DATA:
-${JSON.stringify(currentData, null, 2)}
+Template: ${currentData?.template || 'modern-portfolio'}
+Current Colors: ${JSON.stringify(currentData?.colors || {})}
+Current Fonts: ${JSON.stringify(currentData?.fonts || {})}
 
-TRANSFER OPTIONS:
-- Colors: ${transferOptions?.colors !== false}
-- Fonts: ${transferOptions?.fonts !== false}
-- Layout: ${transferOptions?.layout !== false}
-- Spacing: ${transferOptions?.spacing !== false}
+TRANSFER OPTIONS (what user wants to apply):
+- Colors: ${transferOptions?.colors !== false ? 'YES' : 'NO'}
+- Fonts: ${transferOptions?.fonts !== false ? 'YES' : 'NO'}  
+- Layout: ${transferOptions?.layout !== false ? 'YES' : 'NO'}
+- Spacing: ${transferOptions?.spacing !== false ? 'YES' : 'NO'}
 
-Generate updated design settings that apply the reference style while preserving the user's content. Output ONLY valid JSON:
+CRITICAL RULES:
+1. ONLY apply what user requested in transfer options
+2. Preserve all user content - never change text/images
+3. Adapt reference style to fit user's template type
+4. Output ONLY valid JSON
 
+REQUIRED JSON OUTPUT:
 {
   "colorScheme": {
-    "primary": "#hexcode",
-    "secondary": "#hexcode",
-    "accent": "#hexcode",
-    "background": "#hexcode",
-    "backgroundAlt": "#hexcode",
-    "text": "#hexcode",
-    "textSecondary": "#hexcode"
+    "primary": "#hex",
+    "secondary": "#hex",
+    "accent": "#hex",
+    "background": "#hex",
+    "backgroundAlt": "#hex",
+    "text": "#hex",
+    "textSecondary": "#hex"
   },
   "fonts": {
     "heading": "font-family",
@@ -190,24 +419,26 @@ Generate updated design settings that apply the reference style while preserving
     "style": "modern|elegant|minimal"
   },
   "layoutChanges": {
-    "sectionOrder": ["hero", "about", "services"],
     "spacing": "compact|normal|spacious"
   },
+  "explanation": "Brief explanation of what was applied",
   "recommendations": [
-    "Suggestion 1",
-    "Suggestion 2"
+    "Additional suggestion 1",
+    "Additional suggestion 2"
   ]
-}`
+}
+
+IMPORTANT: Respond with ONLY the JSON object above. No markdown, no explanations outside JSON.`
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-3.5-turbo', // COST-EFFECTIVE: Using cheaper model for style application (no vision needed)
       messages: [
-        { role: 'system', content: 'You are an expert web designer who helps transfer design styles between websites.' },
-        { role: 'user', content: prompt },
+        { role: 'system', content: 'You are an expert web designer who helps apply design styles while preserving user content. Output only valid JSON.' },
+        { role: 'user', content: applyPrompt },
       ],
       temperature: 0.7,
-      max_tokens: 1500,
+      max_tokens: 1000,
     })
 
     const content = completion.choices[0]?.message?.content || '{}'
@@ -362,47 +593,88 @@ async function generateSmartSuggestions(req: NextApiRequest, res: NextApiRespons
     fonts: currentData?.fonts || {},
     sections: currentData?.sectionOrder || [],
     heroTitle: currentData?.hero?.title || '',
+    aboutTitle: currentData?.about?.title || '',
   }
 
-  const prompt = `Analyze this website and provide 3-5 improvement suggestions.
+  // Smart analysis based on design principles
+  const hasLowContrast = checkColorContrast(essentialData.colors)
+  const hasReadabilityIssues = checkFontReadability(essentialData.fonts)
+  const hasSectionOrderIssues = checkSectionOrder(essentialData.sections)
 
-CURRENT STATE:
+  const prompt = `You are an expert UX/UI designer and web design consultant. Analyze this website and provide 3-5 HIGH-IMPACT, ACTIONABLE improvement suggestions based on modern design principles.
+
+CURRENT DESIGN STATE:
 Template: ${essentialData.template}
 Colors: ${JSON.stringify(essentialData.colors)}
 Fonts: ${JSON.stringify(essentialData.fonts)}
-Sections: ${JSON.stringify(essentialData.sections)}
-Hero: "${essentialData.heroTitle}"
+Section Order: ${JSON.stringify(essentialData.sections)}
+Hero Title: "${essentialData.heroTitle}"
+About Title: "${essentialData.aboutTitle}"
 
-Analytics: ${analytics ? `Bounce rate: ${analytics.bounceRate}%` : 'No data'}
+ANALYTICS (if available): ${analytics ? `Bounce rate: ${analytics.bounceRate}%` : 'No analytics data available'}
 
-OUTPUT FORMAT (valid JSON only):
+DESIGN AUDIT FINDINGS:
+- Color Contrast: ${hasLowContrast ? '⚠️ ISSUE: Low contrast detected (accessibility concern)' : '✅ Good contrast'}
+- Typography: ${hasReadabilityIssues ? '⚠️ ISSUE: Font pairing could be improved' : '✅ Good font pairing'}
+- Section Flow: ${hasSectionOrderIssues ? '⚠️ ISSUE: Unconventional section order' : '✅ Logical section flow'}
+
+YOUR TASK:
+1. Prioritize issues that impact conversion, accessibility, and user experience
+2. Provide SPECIFIC, IMPLEMENTABLE solutions (exact hex codes, font names, section orders)
+3. Explain WHY each change helps (data-driven reasoning)
+4. Focus on quick wins with high impact
+
+CRITICAL: Each suggestion MUST have a valid action that can be applied immediately.
+
+ACTION TYPES YOU CAN USE:
+- "apply-color": Apply specific color values { primary: "#hex", secondary: "#hex", ... }
+- "apply-font": Apply specific fonts { heading: "Font Name", body: "Font Name" }
+- "reorder-sections": Reorder sections { order: ["hero", "about", "projects", ...] }
+- "add-section": Add missing section { section: "testimonials|services|contact" }
+- "update-spacing": Change spacing { spacing: "compact|normal|spacious" }
+
+REQUIRED JSON OUTPUT:
 {
   "suggestions": [
     {
-      "id": "unique-id",
-      "type": "color|font|layout|content|seo",
-      "priority": "high|medium|low",
-      "title": "Short title",
-      "description": "Why this helps",
+      "id": "improve-contrast",
+      "type": "color",
+      "priority": "high",
+      "title": "Improve Color Contrast for Accessibility",
+      "description": "Current text-background contrast ratio is 3.2:1. WCAG AAA requires 7:1 for better readability. This affects 15% of users with visual impairments.",
       "action": {
-        "type": "apply-color|apply-font|reorder-sections|add-section",
-        "params": { /* specific parameters */ }
+        "type": "apply-color",
+        "params": {
+          "text": "#1F2937",
+          "background": "#FFFFFF",
+          "textSecondary": "#4B5563"
+        }
       },
-      "expectedImpact": "Measurable improvement"
+      "expectedImpact": "Improves readability by 40% and meets WCAG AAA standards. Studies show 25% increase in time-on-page with better contrast."
     }
   ],
   "overallScore": 75,
-  "strengths": ["strength 1"],
-  "areasToImprove": ["area 1"]
+  "strengths": ["Clear hierarchy", "Modern aesthetic", "Mobile responsive"],
+  "areasToImprove": ["Color accessibility", "Font readability", "Call-to-action visibility"]
 }
 
-EXAMPLES:
-- Color contrast issue → apply-color with accessible colors
-- Font readability → apply-font with better pairing
-- Section order → reorder-sections with optimal flow
-- Missing section → add-section (testimonials)
+SUGGESTION PRIORITY GUIDELINES:
+- HIGH: Accessibility issues, broken UX, conversion blockers
+- MEDIUM: Design improvements, optimization opportunities  
+- LOW: Nice-to-have enhancements, aesthetic tweaks
 
-Keep suggestions actionable and specific.`
+BEST PRACTICES TO CHECK:
+1. **Accessibility**: WCAG 2.1 AA compliance (contrast 4.5:1 minimum)
+2. **Typography**: Max 2-3 fonts, heading/body distinction, readable sizes (16px+ body)
+3. **Color Psychology**: Match colors to industry (blue=trust, orange=energy, green=growth)
+4. **Section Order**: Hero → Value Prop → Social Proof → CTA (proven conversion flow)
+5. **Visual Hierarchy**: Clear focal points, F-pattern layout, whitespace usage
+
+IMPORTANT: 
+- Respond with ONLY valid JSON
+- Include 3-5 suggestions (prioritize by impact)
+- Make action.params SPECIFIC (exact values, not descriptions)
+- Base recommendations on design data and UX research`
 
   try {
     const completion = await openai.chat.completions.create({
