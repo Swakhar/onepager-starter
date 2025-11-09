@@ -1497,11 +1497,11 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
                     </div>
 
                     {/* Section Order */}
-                    {beforeSnapshot.data.sectionOrder && (
+                    {beforeSnapshot.sectionOrder && (
                       <div>
                         <p className="text-xs font-semibold text-gray-700 mb-2">📐 Section Order:</p>
                         <div className="text-xs text-gray-600">
-                          {beforeSnapshot.data.sectionOrder.join(' → ')}
+                          {beforeSnapshot.sectionOrder.join(' → ')}
                         </div>
                       </div>
                     )}
@@ -1574,11 +1574,11 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
                     </div>
 
                     {/* Section Order */}
-                    {currentData.sectionOrder && (
+                    {actualSectionOrder && actualSectionOrder.length > 0 && (
                       <div>
                         <p className="text-xs font-semibold text-gray-700 mb-2">📐 Section Order:</p>
                         <div className="text-xs text-gray-600">
-                          {currentData.sectionOrder.join(' → ')}
+                          {actualSectionOrder.join(' → ')}
                         </div>
                       </div>
                     )}
@@ -1602,7 +1602,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
                   {beforeSnapshot.data.hero?.title !== currentData.hero?.title && (
                     <div>✓ Hero title updated</div>
                   )}
-                  {JSON.stringify(beforeSnapshot.data.sectionOrder) !== JSON.stringify(currentData.sectionOrder) && (
+                  {JSON.stringify(beforeSnapshot.sectionOrder) !== JSON.stringify(actualSectionOrder) && (
                     <div>✓ Section order rearranged</div>
                   )}
                 </div>

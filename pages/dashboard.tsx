@@ -266,12 +266,14 @@ export default function DashboardPage() {
                               <span className="sm:hidden">✏️</span>
                             </Button>
                           </Link>
-                          <Link href={`/preview/${site.id}`} className="flex-1">
-                            <Button variant="outline" className="w-full" size="sm">
-                              <span className="hidden sm:inline">👁️ Preview</span>
-                              <span className="sm:hidden">👁️</span>
-                            </Button>
-                          </Link>
+                          {site.published ? (
+                            <Link href={`/preview/${site.id}`} className="flex-1">
+                              <Button variant="outline" className="w-full" size="sm">
+                                <span className="hidden sm:inline">👁️ Preview</span>
+                                <span className="sm:hidden">👁️</span>
+                              </Button>
+                            </Link>
+                          ) : null}
                           <Button
                             variant="ghost"
                             size="sm"
