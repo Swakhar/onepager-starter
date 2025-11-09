@@ -149,7 +149,10 @@ export default function PreviewPage() {
       {/* Render the template */}
       {TemplateComponent ? (
         <TemplateComponent
-          data={site.data}
+          data={{
+            ...site.data,
+            sectionOrder: site.settings.layout.sectionOrder, // CRITICAL: Pass sectionOrder so hidden sections stay hidden
+          }}
           colors={site.settings.colors}
           fonts={site.settings.fonts}
         />

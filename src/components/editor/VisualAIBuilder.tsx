@@ -14,12 +14,14 @@ interface BeforeSnapshot {
   colors: ColorScheme
   fonts: FontScheme
   data: TemplateData
+  sectionOrder: string[]
 }
 
 interface VisualAIBuilderProps {
   currentData: TemplateData
   currentColors: ColorScheme
   currentFonts: FontScheme
+  currentSectionOrder: string[] // ADDED: Current section order from site.settings.layout
   onApplyChanges: (changes: {
     colors?: ColorScheme
     fonts?: FontScheme
@@ -34,6 +36,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
   currentData,
   currentColors,
   currentFonts,
+  currentSectionOrder, // ADDED: Receive current section order
   onApplyChanges,
 }) => {
   const [mode, setMode] = useState<BuilderMode>('natural-command')
@@ -67,6 +70,26 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
   // Voice Command state
   const [isListening, setIsListening] = useState(false)
   const [voiceSupported, setVoiceSupported] = useState(true)
+
+  // CRITICAL FIX: Derive actual section order from data if currentSectionOrder is empty
+  // This handles the case where site.settings.layout.sectionOrder is []
+  const actualSectionOrder = React.useMemo(() => {
+    if (currentSectionOrder && currentSectionOrder.length > 0) {
+      return currentSectionOrder
+    }
+    
+    // Derive section order from what actually exists in currentData
+    const existingSections: string[] = []
+    const sectionKeys = ['hero', 'about', 'skills', 'social', 'contact', 'projects', 'services', 'features', 'testimonials']
+    
+    sectionKeys.forEach((key) => {
+      if (currentData[key]) {
+        existingSections.push(key)
+      }
+    })
+    
+    return existingSections
+  }, [currentSectionOrder, currentData])
 
   // Check voice support on mount
   useEffect(() => {
@@ -118,21 +141,39 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
 
   // Capture snapshot before applying changes
   const captureSnapshot = useCallback(() => {
+    // Deep clone to ensure we capture actual state, not references
     setBeforeSnapshot({
-      colors: currentColors,
-      fonts: currentFonts,
-      data: currentData,
+      colors: JSON.parse(JSON.stringify(currentColors)),
+      fonts: JSON.parse(JSON.stringify(currentFonts)),
+      data: JSON.parse(JSON.stringify(currentData)),
+      sectionOrder: JSON.parse(JSON.stringify(actualSectionOrder)), // FIXED: Use actualSectionOrder
     })
-  }, [currentColors, currentFonts, currentData])
+    console.log('📸 Snapshot captured:', {
+      sections: actualSectionOrder, // FIXED: Log actual section order
+      dataKeys: Object.keys(currentData || {}),
+    })
+  }, [currentColors, currentFonts, currentData, actualSectionOrder])
 
   // Restore from snapshot
   const restoreSnapshot = () => {
-    if (!beforeSnapshot) return
+    if (!beforeSnapshot) {
+      alert('⚠️ No snapshot available to restore')
+      return
+    }
+    
+    console.log('↩️ Restoring snapshot:', {
+      sections: beforeSnapshot.sectionOrder, // FIXED: Log actual section order
+      dataKeys: Object.keys(beforeSnapshot.data || {}),
+    })
+    
+    console.log('🔍 Restoring with sectionOrder:', beforeSnapshot.sectionOrder)
+    console.log('🔍 Data keys being restored:', Object.keys(beforeSnapshot.data))
     
     onApplyChanges({
       colors: beforeSnapshot.colors,
       fonts: beforeSnapshot.fonts,
       data: beforeSnapshot.data,
+      sectionOrder: beforeSnapshot.sectionOrder, // ADDED: Restore section order
     })
     
     alert('✅ Design restored to before AI changes')
@@ -140,16 +181,36 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
     setBeforeSnapshot(null)
   }
 
-  // Add command to history
+  // Add command to history (smart: avoid duplicates, update timestamp if command exists)
   const addToHistory = useCallback((command: string, result: any) => {
-    const newItem: CommandHistoryItem = {
-      id: Date.now().toString(),
-      command,
-      timestamp: new Date(),
-      result,
-    }
-    
-    setCommandHistory(prev => [newItem, ...prev.slice(0, 49)]) // Keep last 50
+    setCommandHistory(prev => {
+      // Check if this command already exists
+      const existingIndex = prev.findIndex(item => item.command.toLowerCase().trim() === command.toLowerCase().trim())
+      
+      if (existingIndex >= 0) {
+        // Command exists - update it and move to top
+        const updatedItem: CommandHistoryItem = {
+          ...prev[existingIndex],
+          timestamp: new Date(), // Update timestamp
+          result, // Update result
+        }
+        
+        // Remove old entry and add updated one at the top
+        const newHistory = [...prev]
+        newHistory.splice(existingIndex, 1)
+        return [updatedItem, ...newHistory]
+      } else {
+        // New command - add to top
+        const newItem: CommandHistoryItem = {
+          id: Date.now().toString(),
+          command,
+          timestamp: new Date(),
+          result,
+        }
+        
+        return [newItem, ...prev.slice(0, 49)] // Keep last 50
+      }
+    })
   }, [])
 
   // Toggle favorite
@@ -317,6 +378,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
           currentData,
           currentColors,
           currentFonts,
+          currentSectionOrder: actualSectionOrder,
         }),
       })
 
@@ -334,6 +396,35 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
       // Auto-apply if changes are straightforward
       if (data.changes) {
         applyNaturalCommandChanges(data.changes)
+        
+        // Show success message based on what changed
+        let message = '✅ Changes Applied!'
+        if (data.changes.components?.remove) {
+          message += `\n\n📦 Hidden sections: ${data.changes.components.remove.join(', ')}`
+          message += '\n\n💡 Note: Section data is preserved. You can re-add it anytime from the Content panel.'
+        }
+        if (data.changes.components?.add) {
+          message += `\n\n➕ Added sections: ${data.changes.components.add.join(', ')}`
+        }
+        if (data.changes.colors) {
+          const changedColors = Object.keys(data.changes.colors).join(', ')
+          message += `\n\n🎨 Updated colors: ${changedColors}`
+        }
+        if (data.changes.fonts) {
+          message += `\n\n✍️ Updated fonts`
+        }
+        if (data.changes.content) {
+          const changedSections = Object.keys(data.changes.content).join(', ')
+          message += `\n\n📝 Updated content in: ${changedSections}`
+        }
+        
+        message += `\n\n${data.explanation || ''}`
+        
+        if (data.additionalSuggestions && data.additionalSuggestions.length > 0) {
+          message += `\n\n💡 Suggestions:\n${data.additionalSuggestions.map((s: string) => `• ${s}`).join('\n')}`
+        }
+        
+        alert(message)
       }
     } catch (error: any) {
       setError(error.message)
@@ -345,6 +436,9 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
   // Apply natural command changes
   const applyNaturalCommandChanges = (changes: any) => {
     const updates: any = {}
+
+    // CRITICAL: Always start with full current data to preserve everything
+    let updatedData = { ...currentData }
 
     // Apply color changes
     if (changes.colors) {
@@ -364,13 +458,9 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
 
     // Apply content changes
     if (changes.content) {
-      updates.data = {
-        ...currentData,
-      }
-
       // Update hero content
       if (changes.content.hero) {
-        updates.data.hero = {
+        updatedData.hero = {
           ...currentData.hero,
           ...changes.content.hero,
         }
@@ -378,7 +468,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
 
       // Update about content
       if (changes.content.about) {
-        updates.data.about = {
+        updatedData.about = {
           ...currentData.about,
           ...changes.content.about,
         }
@@ -387,7 +477,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
       // Update any other content sections
       Object.keys(changes.content).forEach((key) => {
         if (key !== 'hero' && key !== 'about') {
-          updates.data[key] = {
+          updatedData[key] = {
             ...currentData[key],
             ...changes.content[key],
           }
@@ -397,45 +487,67 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
 
     // Apply layout changes
     if (changes.layout) {
-      updates.data = updates.data || { ...currentData }
-
       if (changes.layout.sectionOrder) {
-        updates.data.sectionOrder = changes.layout.sectionOrder
+        updatedData.sectionOrder = changes.layout.sectionOrder
       }
 
       if (changes.layout.spacing) {
-        updates.data.spacing = changes.layout.spacing
+        updatedData.spacing = changes.layout.spacing
       }
 
       if (changes.layout.alignment) {
-        updates.data.alignment = changes.layout.alignment
+        updatedData.alignment = changes.layout.alignment
       }
     }
 
     // Apply component changes (add/remove sections)
     if (changes.components) {
-      updates.data = updates.data || { ...currentData }
-
       // Add new sections
       if (changes.components.add && Array.isArray(changes.components.add)) {
-        const currentOrder = updates.data.sectionOrder || currentData.sectionOrder || []
+        // FIXED: Use actualSectionOrder
+        const currentOrder = actualSectionOrder || []
         const newSections = changes.components.add.filter((s: string) => !currentOrder.includes(s))
         if (newSections.length > 0) {
-          updates.data.sectionOrder = [...currentOrder, ...newSections]
+          updatedData.sectionOrder = [...currentOrder, ...newSections]
         }
       }
 
-      // Remove sections
+      // Remove sections (ONLY from sectionOrder, data is preserved!)
       if (changes.components.remove && Array.isArray(changes.components.remove)) {
-        const currentOrder = updates.data.sectionOrder || currentData.sectionOrder || []
-        updates.data.sectionOrder = currentOrder.filter((s: string) => !changes.components.remove.includes(s))
+        // FIXED: Use actualSectionOrder, not currentSectionOrder prop
+        const currentOrder = actualSectionOrder || []
+        
+        console.log('🔍 Before removal - Current order:', currentOrder)
+        console.log('🔍 Sections to remove:', changes.components.remove)
+        
+        // Filter out removed sections from order
+        updatedData.sectionOrder = currentOrder.filter((s: string) => 
+          !changes.components.remove.includes(s)
+        )
+        
+        console.log('🔍 After removal - New order:', updatedData.sectionOrder)
+        
+        // CRITICAL: Explicitly preserve ALL original data for ALL sections
+        // This ensures removed sections keep their data
+        Object.keys(currentData).forEach((key) => {
+          if (typeof currentData[key] === 'object' && currentData[key] !== null) {
+            // Preserve all section data (hero, about, projects, etc.)
+            if (!updatedData[key]) {
+              updatedData[key] = currentData[key]
+            }
+          }
+        })
+        
+        console.log('✅ Hidden sections (data preserved):', changes.components.remove)
+        console.log('✅ New section order:', updatedData.sectionOrder)
+        console.log('✅ All data keys preserved:', Object.keys(updatedData))
       }
 
       // Modify specific components
       if (changes.components.modify) {
         Object.keys(changes.components.modify).forEach((key) => {
-          updates.data[key] = {
-            ...updates.data[key],
+          updatedData[key] = {
+            ...updatedData[key],
             ...changes.components.modify[key],
           }
         })
@@ -444,11 +556,22 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
 
     // Apply animation changes
     if (changes.animations) {
-      updates.data = updates.data || { ...currentData }
-      updates.data.animations = {
+      updatedData.animations = {
         ...(currentData.animations || {}),
         ...changes.animations,
       }
+    }
+
+    // CRITICAL FIX: sectionOrder should be passed separately, not inside data
+    if (updatedData.sectionOrder) {
+      updates.sectionOrder = updatedData.sectionOrder
+      // Remove sectionOrder from data object
+      delete updatedData.sectionOrder
+    }
+
+    // Assign the final data object
+    if (Object.keys(updatedData).length > 0) {
+      updates.data = updatedData
     }
 
     onApplyChanges(updates)

@@ -3,7 +3,9 @@ import { Button } from '../ui/Button'
 
 interface SectionOrderManagerProps {
   data: any
-  onDataChange: (data: any) => void
+  sectionOrder?: string[] // ADDED: Current section order from site.settings.layout
+  onSectionOrderChange?: (order: string[]) => void // ADDED: Callback to update section order
+  onDataChange?: (data: any) => void // KEPT: For backward compatibility
   templateId?: string
 }
 
@@ -20,7 +22,9 @@ const sectionLabels: Record<string, string> = {
 
 export const SectionOrderManager: React.FC<SectionOrderManagerProps> = ({
   data,
-  onDataChange,
+  sectionOrder: propSectionOrder, // ADDED: Receive from props
+  onSectionOrderChange, // ADDED: Receive callback
+  onDataChange, // ADDED: For backward compatibility
   templateId = 'modern-portfolio',
 }) => {
   // Define which sections each template supports for ordering
@@ -32,7 +36,11 @@ export const SectionOrderManager: React.FC<SectionOrderManagerProps> = ({
 
   // Get the default order for the current template
   const defaultOrder = templateOrderableSections[templateId] || templateOrderableSections['modern-portfolio']
-  const currentOrder = data.sectionOrder || defaultOrder
+  
+  // CRITICAL: Use propSectionOrder from site.settings.layout if available, otherwise fall back to data.sectionOrder or default
+  const currentOrder = propSectionOrder && propSectionOrder.length > 0 
+    ? propSectionOrder 
+    : (data.sectionOrder || defaultOrder)
 
   // Filter to only show sections that have data AND are supported by the template
   const availableSections = currentOrder.filter((sectionId: string) => {
@@ -60,17 +68,29 @@ export const SectionOrderManager: React.FC<SectionOrderManagerProps> = ({
     // Swap
     [newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]]
     
-    onDataChange({
-      ...data,
-      sectionOrder: newOrder,
-    })
+    // CRITICAL: Use callback if available, otherwise update data directly
+    if (onSectionOrderChange) {
+      onSectionOrderChange(newOrder)
+    } else {
+      // Fallback for backward compatibility
+      onDataChange?.({
+        ...data,
+        sectionOrder: newOrder,
+      })
+    }
   }
 
   const resetOrder = () => {
-    onDataChange({
-      ...data,
-      sectionOrder: undefined,
-    })
+    // CRITICAL: Use callback if available
+    if (onSectionOrderChange) {
+      onSectionOrderChange(defaultOrder)
+    } else {
+      // Fallback for backward compatibility
+      onDataChange?.({
+        ...data,
+        sectionOrder: undefined,
+      })
+    }
   }
 
   if (availableSections.length <= 1) {

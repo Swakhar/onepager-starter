@@ -13,11 +13,19 @@ interface ContentPanelProps {
   data: TemplateData
   onDataChange: (data: TemplateData) => void
   templateId?: string
+  sectionOrder?: string[] // ADDED: Current section order from site.settings.layout
+  onSectionOrderChange?: (order: string[]) => void // ADDED: Callback to update section order
 }
 
 type Section = 'hero' | 'about' | 'projects' | 'skills' | 'contact' | 'social' | 'services' | 'features' | 'testimonials' | 'layout' | 'experience' | 'education'
 
-export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, templateId = 'modern-portfolio' }) => {
+export const ContentPanel: React.FC<ContentPanelProps> = ({ 
+  data, 
+  onDataChange, 
+  templateId = 'modern-portfolio',
+  sectionOrder, // ADDED: Receive section order
+  onSectionOrderChange, // ADDED: Receive callback
+}) => {
   const [activeSection, setActiveSection] = useState<Section>('hero')
   const [expandedProject, setExpandedProject] = useState<number | null>(null)
   const [expandedSkill, setExpandedSkill] = useState<number | null>(null)
@@ -378,11 +386,17 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
     'creative-resume': ['hero', 'about', 'experience', 'education', 'projects', 'skills', 'services', 'features', 'testimonials', 'contact', 'social'],
   }
 
-  // Filter sections based on template AND whether content exists
+  // Filter sections based on template AND whether content exists AND sectionOrder
   const visibleSections = sections.filter(section => {
-    // Layout section - hide for creative-resume template
+    // Layout section - always show for modern-portfolio and business-card
     if (section.id === 'layout') {
       return templateId !== 'creative-resume'
+    }
+    
+    // CRITICAL: Check if section is in sectionOrder (i.e., not hidden by AI)
+    // If sectionOrder is provided and section is not in it, hide it
+    if (sectionOrder && sectionOrder.length > 0 && !sectionOrder.includes(section.id)) {
+      return false
     }
     
     // First check if template supports this section
@@ -2351,7 +2365,8 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({ data, onDataChange, 
           <div className="p-5 animate-fadeIn">
             <SectionOrderManager 
               data={data} 
-              onDataChange={onDataChange} 
+              sectionOrder={sectionOrder} 
+              onSectionOrderChange={onSectionOrderChange}
               templateId={templateId}
             />
           </div>

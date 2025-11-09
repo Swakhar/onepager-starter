@@ -229,106 +229,109 @@ Generate updated design settings that apply the reference style while preserving
 
 // Process natural language design commands
 async function processNaturalCommand(req: NextApiRequest, res: NextApiResponse) {
-  const { command, currentData, currentColors, currentFonts } = req.body
+  const { command, currentData, currentColors, currentFonts, currentSectionOrder } = req.body
 
-  const prompt = `You are a web design AI assistant. Process this design command and output comprehensive changes as JSON.
+  // Extract only essential info to reduce token count
+  const essentialData = {
+    template: currentData?.template || 'modern-portfolio',
+    sectionOrder: currentSectionOrder || [], // FIXED: Use actual section order from site.settings.layout
+    heroTitle: currentData?.hero?.title || '',
+    aboutTitle: currentData?.about?.title || '',
+    hasSections: {
+      hero: !!currentData?.hero,
+      about: !!currentData?.about,
+      services: !!currentData?.services,
+      projects: !!currentData?.projects,
+      testimonials: !!currentData?.testimonials,
+      contact: !!currentData?.contact,
+    }
+  }
+
+  const prompt = `You are an intelligent web design AI assistant like ChatGPT. Process this natural language command and make ONLY the changes the user wants.
 
 USER COMMAND: "${command}"
 
-CURRENT DESIGN STATE:
+CURRENT STATE:
 Colors: ${JSON.stringify(currentColors)}
 Fonts: ${JSON.stringify(currentFonts)}
-Template: ${currentData?.template || 'modern-portfolio'}
-Current Sections: ${JSON.stringify(currentData?.sectionOrder || [])}
-Hero Data: ${JSON.stringify(currentData?.hero || {})}
+Template: ${essentialData.template}
+Sections: ${JSON.stringify(essentialData.sectionOrder)}
+Available: ${JSON.stringify(essentialData.hasSections)}
 
-Generate ONLY valid JSON with ALL possible changes. You can modify:
-- Colors (all 7 properties)
-- Fonts (heading, body)
-- Content (hero text, descriptions, CTAs)
-- Layout (spacing, alignment, section order)
-- Components (add/remove sections)
-- Animations (entrance effects, hover states)
-- Specific sections (target hero, about, services, etc.)
+CRITICAL RULES:
+1. **Be specific** - If user says "change color to blue", ONLY change primary color to blue
+2. **Preserve content** - NEVER delete content unless user explicitly says "delete content"
+3. **Remove vs Hide** - "Remove section" means hide it (remove from sectionOrder), NOT delete data
+4. **Smart inference** - "Make it professional" = change colors + fonts, "warmer" = orange/red colors only
+5. **No over-engineering** - Don't add things user didn't ask for
+6. **Context aware** - Understand variations like "remove", "hide", "get rid of", "take out" all mean the same
+
+COMMAND INTERPRETATION EXAMPLES:
+✅ "Remove About Me Section" → components.remove: ["about"] (hide section, keep data)
+✅ "Change color to blue" → colors.primary: "#3B82F6" (only primary)
+✅ "Make text darker" → colors.text: "#111111" (only text color)
+✅ "Use modern fonts" → fonts.heading + fonts.body (both fonts)
+✅ "Make it warmer" → colors (warm palette), NOT fonts/layout
+✅ "Add testimonials" → components.add: ["testimonials"]
+✅ "Change hero title to Welcome" → content.hero.title: "Welcome"
+✅ "Make buttons bigger" → (no API support, suggest manual edit)
+
+❌ "Remove section" → DON'T delete content data
+❌ "Change color" → DON'T change fonts/layout/content
+❌ "Make professional" → DON'T remove sections
 
 OUTPUT FORMAT (valid JSON only):
 {
   "changes": {
-    "colors": {
-      "primary": "#hexcode",
-      "secondary": "#hexcode",
-      "accent": "#hexcode",
-      "background": "#hexcode",
-      "backgroundAlt": "#hexcode",
-      "text": "#hexcode",
-      "textSecondary": "#hexcode"
+    "colors": { "primary": "#hex", "secondary": "#hex", ... },
+    "fonts": { "heading": "font", "body": "font" },
+    "content": { "hero": { "title": "text", "subtitle": "text" } },
+    "layout": { "spacing": "compact|normal|spacious", "sectionOrder": ["hero", "about", ...] },
+    "components": { 
+      "add": ["testimonials"],
+      "remove": ["about"]  // ONLY removes from view, data preserved
     },
-    "fonts": {
-      "heading": "font-family",
-      "body": "font-family"
-    },
-    "content": {
-      "hero": {
-        "title": "new title if command requests it",
-        "subtitle": "new subtitle",
-        "cta": "new CTA text"
-      },
-      "about": {
-        "description": "updated description"
-      }
-    },
-    "layout": {
-      "spacing": "compact|normal|spacious",
-      "alignment": "left|center|right",
-      "sectionOrder": ["hero", "about", "services", "projects", "contact"]
-    },
-    "components": {
-      "add": ["testimonials", "services"],
-      "remove": ["projects"],
-      "modify": {
-        "hero": {
-          "style": "full-screen|split|minimal",
-          "hasImage": true|false
-        }
-      }
-    },
-    "animations": {
-      "entranceEffect": "fade-in|slide-up|zoom-in|none",
-      "enableHoverEffects": true|false
-    }
+    "animations": { "entranceEffect": "fade-in", "enableHoverEffects": true }
   },
-  "explanation": "Detailed explanation of ALL changes made and why",
-  "additionalSuggestions": [
-    "Related suggestion 1",
-    "Related suggestion 2"
-  ]
+  "explanation": "Brief explanation of what you changed",
+  "additionalSuggestions": ["Related suggestion"]
 }
 
-COMMAND EXAMPLES & EXPECTED BEHAVIOR:
-- "Make it look warmer" → Warm orange/red colors, friendly fonts
-- "Make it more professional" → Blue/gray corporate colors, sans-serif fonts
-- "Change all buttons to blue" → Update primary/accent to blue
-- "Make it look like Apple's website" → Clean white/gray, SF Pro style, minimal
-- "Add more contrast" → Darker text, lighter backgrounds
-- "Make the hero more engaging" → Update hero content, add dynamic CTA, suggest image
-- "Reorganize sections to emphasize services" → Move services section higher
-- "Add testimonials section" → Include testimonials in components.add
-- "Remove the projects section" → Include projects in components.remove
-- "Make it playful and fun" → Bright colors, rounded fonts, add animations
-- "Change the hero title to 'Welcome to Innovation'" → Update content.hero.title
-- "Add smooth animations" → Enable entrance effects and hover states
-- "Make it look more modern and tech-focused" → Update colors, fonts, and suggest minimal layout
-
-IMPORTANT: Only include properties that are actually being changed. If command doesn't mention content, don't include content object. If it's only about colors, only return colors.`
+IMPORTANT: 
+- Only include properties that are ACTUALLY changing
+- Be conservative - less is more
+- If command is unclear, make minimal safe changes
+- components.remove NEVER deletes data, only hides section`
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-3.5-turbo',
       messages: [
-        { role: 'system', content: 'You are an advanced AI design assistant that processes natural language commands and outputs comprehensive structured JSON changes. You can modify colors, fonts, content, layout, components, and animations.' },
+        { 
+          role: 'system', 
+          content: `You are an intelligent design AI that processes natural language commands precisely. 
+
+KEY PRINCIPLES:
+1. Be surgical - only change what user explicitly requests
+2. "Remove/hide section" = remove from sectionOrder ONLY, preserve data
+3. "Change color" = only color properties, never fonts/layout
+4. Understand synonyms: "remove"="hide"="take out"="get rid of"
+5. Be conservative - when unsure, make minimal changes
+
+CORRECT INTERPRETATIONS:
+"Remove About section" → components.remove: ["about"]
+"Change to blue" → colors.primary: "#3B82F6" 
+"Darker text" → colors.text: "#111"
+"Add testimonials" → components.add: ["testimonials"]
+
+INCORRECT (never do these):
+"Remove section" → DON'T delete content data
+"Change color" → DON'T change fonts
+"Professional look" → DON'T remove sections`
+        },
         { role: 'user', content: prompt },
       ],
-      temperature: 0.8,
+      temperature: 0.7, // Lower temperature for more precise/consistent results
       max_tokens: 2000,
     })
 
@@ -352,15 +355,25 @@ IMPORTANT: Only include properties that are actually being changed. If command d
 async function generateSmartSuggestions(req: NextApiRequest, res: NextApiResponse) {
   const { currentData, analytics } = req.body
 
-  const prompt = `You are a web design consultant. Analyze this website and provide smart improvement suggestions.
+  // Extract only essential info to reduce token count
+  const essentialData = {
+    template: currentData?.template || 'modern-portfolio',
+    colors: currentData?.colors || {},
+    fonts: currentData?.fonts || {},
+    sections: currentData?.sectionOrder || [],
+    heroTitle: currentData?.hero?.title || '',
+  }
 
-CURRENT WEBSITE:
-${JSON.stringify(currentData, null, 2)}
+  const prompt = `Analyze this website and provide 3-5 improvement suggestions.
 
-ANALYTICS DATA:
-${JSON.stringify(analytics || {}, null, 2)}
+CURRENT STATE:
+Template: ${essentialData.template}
+Colors: ${JSON.stringify(essentialData.colors)}
+Fonts: ${JSON.stringify(essentialData.fonts)}
+Sections: ${JSON.stringify(essentialData.sections)}
+Hero: "${essentialData.heroTitle}"
 
-Generate ONLY valid JSON with actionable suggestions. IMPORTANT: Each suggestion MUST have a valid action object with specific parameters.
+Analytics: ${analytics ? `Bounce rate: ${analytics.bounceRate}%` : 'No data'}
 
 OUTPUT FORMAT (valid JSON only):
 {
@@ -369,97 +382,31 @@ OUTPUT FORMAT (valid JSON only):
       "id": "unique-id",
       "type": "color|font|layout|content|seo",
       "priority": "high|medium|low",
-      "title": "Short actionable title",
-      "description": "Detailed explanation of the issue and why this change helps",
+      "title": "Short title",
+      "description": "Why this helps",
       "action": {
-        "type": "apply-color|apply-font|reorder-sections|add-section|update-spacing|update-content",
-        "params": {
-          // For apply-color: exact color values
-          "primary": "#hexcode",
-          "text": "#hexcode"
-          
-          // For apply-font: exact font names
-          "heading": "Font Name",
-          "body": "Font Name"
-          
-          // For reorder-sections: exact new order
-          "order": ["hero", "services", "about", "projects", "contact"]
-          
-          // For add-section: section name
-          "section": "testimonials"
-          
-          // For update-spacing: spacing value
-          "spacing": "spacious"
-          
-          // For update-content: section and changes
-          "section": "hero",
-          "changes": { "title": "New title" }
-        }
+        "type": "apply-color|apply-font|reorder-sections|add-section",
+        "params": { /* specific parameters */ }
       },
-      "expectedImpact": "Specific measurable improvement this will bring"
+      "expectedImpact": "Measurable improvement"
     }
   ],
   "overallScore": 75,
-  "strengths": ["Specific strength 1", "Specific strength 2"],
-  "areasToImprove": ["Specific area 1", "Specific area 2"]
+  "strengths": ["strength 1"],
+  "areasToImprove": ["area 1"]
 }
 
-EXAMPLE SUGGESTIONS:
-1. Color Contrast Issue:
-{
-  "id": "color-contrast-1",
-  "type": "color",
-  "priority": "high",
-  "title": "Improve Text Contrast",
-  "description": "Current text color #666666 has insufficient contrast (3.2:1) with background. WCAG AA requires 4.5:1 for body text.",
-  "action": {
-    "type": "apply-color",
-    "params": {
-      "text": "#222222",
-      "textSecondary": "#555555"
-    }
-  },
-  "expectedImpact": "Better readability and accessibility, improved SEO"
-}
+EXAMPLES:
+- Color contrast issue → apply-color with accessible colors
+- Font readability → apply-font with better pairing
+- Section order → reorder-sections with optimal flow
+- Missing section → add-section (testimonials)
 
-2. Font Optimization:
-{
-  "id": "font-optimization-1",
-  "type": "font",
-  "priority": "medium",
-  "title": "Use System Fonts for Speed",
-  "description": "Custom fonts add 200kb to page load. System fonts are faster and provide native feel.",
-  "action": {
-    "type": "apply-font",
-    "params": {
-      "heading": "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      "body": "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-    }
-  },
-  "expectedImpact": "Faster page load (0.5s improvement), better performance score"
-}
-
-3. Section Reordering:
-{
-  "id": "section-order-1",
-  "type": "layout",
-  "priority": "medium",
-  "title": "Move Services Section Higher",
-  "description": "Services are your key offering. Moving them before About can improve conversion by 15-20%.",
-  "action": {
-    "type": "reorder-sections",
-    "params": {
-      "order": ["hero", "services", "about", "projects", "testimonials", "contact"]
-    }
-  },
-  "expectedImpact": "Higher engagement with service offerings, improved conversion rate"
-}
-
-Analyze the current website and provide 3-5 actionable suggestions with VALID action objects.`
+Keep suggestions actionable and specific.`
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-3.5-turbo', // Using GPT-3.5 for faster processing and lower token usage
       messages: [
         { role: 'system', content: 'You are an expert web design consultant providing actionable improvement suggestions.' },
         { role: 'user', content: prompt },

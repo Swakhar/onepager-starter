@@ -477,6 +477,20 @@ export default function EditorPage() {
                   data={site.data}
                   onDataChange={(newData: TemplateData) => setSite({ ...site, data: newData })}
                   templateId={site.templateId}
+                  sectionOrder={site.settings.layout.sectionOrder} // ADDED: Pass section order
+                  onSectionOrderChange={(newOrder: string[]) => {
+                    // ADDED: Update section order in settings
+                    setSite({
+                      ...site,
+                      settings: {
+                        ...site.settings,
+                        layout: {
+                          ...site.settings.layout,
+                          sectionOrder: newOrder,
+                        }
+                      }
+                    })
+                  }}
                 />
               )}
 
@@ -498,6 +512,7 @@ export default function EditorPage() {
                   currentData={site.data}
                   currentColors={site.settings.colors}
                   currentFonts={site.settings.fonts}
+                  currentSectionOrder={site.settings.layout.sectionOrder} // ADDED: Pass section order
                   onApplyChanges={(changes) => {
                     const updates: any = {}
                     if (changes.colors) {
@@ -519,12 +534,26 @@ export default function EditorPage() {
                       }
                     }
                     if (changes.sectionOrder) {
-                      updates.data = {
-                        ...(updates.data || site.data),
-                        sectionOrder: changes.sectionOrder,
+                      // CRITICAL FIX: Deep merge settings to preserve colors, fonts, etc.
+                      updates.settings = {
+                        ...site.settings, // Start with all current settings
+                        ...(updates.settings || {}), // Merge any updates.settings
+                        layout: {
+                          ...site.settings.layout, // Preserve other layout properties
+                          sectionOrder: changes.sectionOrder, // Update section order
+                        }
                       }
                     }
-                    setSite({ ...site, ...updates })
+                    
+                    // CRITICAL FIX: Properly merge nested settings object
+                    setSite({
+                      ...site,
+                      ...updates,
+                      settings: {
+                        ...site.settings,
+                        ...(updates.settings || {}),
+                      }
+                    })
                   }}
                 />
               )}
@@ -627,7 +656,10 @@ export default function EditorPage() {
                     }
                     return (
                       <TemplateComponent
-                        data={site.data}
+                        data={{
+                          ...site.data,
+                          sectionOrder: site.settings.layout.sectionOrder, // CRITICAL: Pass sectionOrder to template
+                        }}
                         colors={site.settings.colors}
                         fonts={site.settings.fonts}
                       />
