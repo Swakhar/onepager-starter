@@ -386,23 +386,29 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     'creative-resume': ['hero', 'about', 'experience', 'education', 'projects', 'skills', 'services', 'features', 'testimonials', 'contact', 'social'],
   }
 
-  // Filter sections based on template AND whether content exists AND sectionOrder
+  // Filter sections based on template AND whether content exists
   const visibleSections = sections.filter(section => {
     // Layout section - always show for modern-portfolio and business-card
     if (section.id === 'layout') {
       return templateId !== 'creative-resume'
     }
     
-    // CRITICAL: Check if section is in sectionOrder (i.e., not hidden by AI)
-    // If sectionOrder is provided and section is not in it, hide it
-    if (sectionOrder && sectionOrder.length > 0 && !sectionOrder.includes(section.id)) {
-      return false
-    }
-    
     // First check if template supports this section
     const isTemplateSupported = templateSupportedSections[templateId]?.includes(section.id) ?? true
     
     if (!isTemplateSupported) return false
+    
+    // CRITICAL FIX: Social and Contact sections should ALWAYS be visible if template supports them
+    // They are core sections that users need to edit even if not in sectionOrder
+    if (section.id === 'social' || section.id === 'contact') {
+      return true
+    }
+    
+    // For other sections, check if section is in sectionOrder (i.e., not hidden by AI)
+    // If sectionOrder is provided and section is not in it, hide it
+    if (sectionOrder && sectionOrder.length > 0 && !sectionOrder.includes(section.id)) {
+      return false
+    }
     
     // For dynamic sections (services, features, testimonials), only show if content exists
     if (section.id === 'services') {

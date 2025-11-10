@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef } from 'react'
+import React, { useCallback, useState, useRef, useEffect } from 'react'
 import { Button } from './Button'
 
 interface ImageUploadProps {
@@ -21,6 +21,13 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   const [preview, setPreview] = useState(value || '')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // CRITICAL FIX: Sync preview with value prop changes
+  // This ensures that when the parent changes the value (e.g., from AI or other edits),
+  // the preview updates accordingly
+  useEffect(() => {
+    setPreview(value || '')
+  }, [value])
+
   const aspectRatioClasses = {
     square: 'aspect-square',
     portrait: 'aspect-[3/4]',
@@ -36,28 +43,6 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
-  }, [])
-
-  const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
-      e.preventDefault()
-      setIsDragging(false)
-
-      const files = Array.from(e.dataTransfer.files)
-      const imageFiles = files.filter((file) => file.type.startsWith('image/'))
-
-      if (imageFiles.length > 0) {
-        await handleFiles(imageFiles[0])
-      }
-    },
-    []
-  )
-
-  const handleFileInput = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (files && files.length > 0) {
-      await handleFiles(files[0])
-    }
   }, [])
 
   const handleFiles = async (file: File) => {
@@ -100,9 +85,39 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     }
   }
 
+  // CRITICAL FIX: Define handleFileInput and handleDrop after handleFiles
+  // so they can reference it without dependency issues
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      await handleFiles(files[0])
+    }
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+
+    const files = Array.from(e.dataTransfer.files)
+    const imageFiles = files.filter((file) => file.type.startsWith('image/'))
+
+    if (imageFiles.length > 0) {
+      await handleFiles(imageFiles[0])
+    }
+  }
+
   return (
     <div className={className}>
       {label && <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>}
+
+      {/* CRITICAL FIX: Keep input always in DOM so "Change" button can trigger it */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileInput}
+        className="hidden"
+      />
 
       {preview ? (
         <div className="relative group">
@@ -145,14 +160,6 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
               : 'border-gray-300 hover:border-gray-400 bg-gray-50'
           } ${aspectRatioClasses[aspectRatio]}`}
         >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileInput}
-            className="hidden"
-          />
-
           {isUploading ? (
             <div className="flex flex-col items-center justify-center">
               <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
