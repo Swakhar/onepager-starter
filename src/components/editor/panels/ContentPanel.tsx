@@ -383,7 +383,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   // Define which sections each template supports
   const templateSupportedSections: Record<string, Section[]> = {
     'modern-portfolio': ['layout', 'hero', 'about', 'projects', 'services', 'features', 'testimonials', 'contact', 'social'],
-    'business-card': ['layout', 'hero', 'about', 'skills', 'services', 'features', 'testimonials', 'contact', 'social'],
+    'business-card': ['layout', 'hero', 'about', 'skills', 'projects', 'services', 'features', 'testimonials', 'contact', 'social'],
     'creative-resume': ['hero', 'about', 'experience', 'education', 'projects', 'skills', 'services', 'features', 'testimonials', 'contact', 'social'],
   }
 
@@ -399,10 +399,15 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     
     if (!isTemplateSupported) return false
     
-    // CRITICAL FIX: Social and Contact sections should ALWAYS be visible if template supports them
-    // They are core sections that users need to edit even if not in sectionOrder
-    if (section.id === 'social' || section.id === 'contact') {
+    // CRITICAL FIX: Core sections should ALWAYS be visible if template supports them
+    // These are sections that users need to edit even if not in sectionOrder
+    if (section.id === 'social' || section.id === 'contact' || section.id === 'hero' || section.id === 'about') {
       return true
+    }
+    
+    // For projects section, show if content exists (don't rely solely on sectionOrder)
+    if (section.id === 'projects') {
+      return data.projects && data.projects.length > 0
     }
     
     // For other sections, check if section is in sectionOrder (i.e., not hidden by AI)
@@ -1455,7 +1460,31 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 </div>
 
                 <div className="pt-4 border-t border-gray-200">
-                  <h4 className="text-sm font-bold text-gray-900 mb-3">Service Items</h4>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-bold text-gray-900">Service Items</h4>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const newService = {
+                          id: `service-${Date.now()}`,
+                          title: 'New Service',
+                          description: 'Describe your service here',
+                          icon: '⚡',
+                          features: []
+                        }
+                        onDataChange({
+                          ...data,
+                          services: {
+                            ...data.services!,
+                            items: [...data.services!.items, newService]
+                          }
+                        })
+                      }}
+                      className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+                    >
+                      + Add Service
+                    </Button>
+                  </div>
                   <div className="space-y-3">
                     {data.services.items.map((service, index) => (
                       <div key={service.id} className="border border-gray-200 rounded-lg p-4 bg-white">
@@ -1892,7 +1921,33 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 </div>
 
                 <div className="pt-4 border-t border-gray-200">
-                  <h4 className="text-sm font-bold text-gray-900 mb-3">Testimonial Items</h4>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-bold text-gray-900">Testimonial Items</h4>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const newTestimonial = {
+                          id: `testimonial-${Date.now()}`,
+                          content: 'Your testimonial quote goes here...',
+                          author: 'Customer Name',
+                          role: 'Job Title',
+                          company: 'Company Name',
+                          avatar: '',
+                          rating: 5
+                        }
+                        onDataChange({
+                          ...data,
+                          testimonials: {
+                            ...data.testimonials!,
+                            items: [...data.testimonials!.items, newTestimonial]
+                          }
+                        })
+                      }}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                    >
+                      + Add Testimonial
+                    </Button>
+                  </div>
                   <div className="space-y-3">
                     {data.testimonials.items.map((testimonial, index) => (
                       <div key={testimonial.id} className="border border-gray-200 rounded-lg p-4 bg-white">

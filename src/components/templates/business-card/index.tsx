@@ -3,6 +3,7 @@ import { TemplateData, ColorScheme, FontScheme } from '@/types/template'
 import { Services } from './Services'
 import { Features } from './Features'
 import { Testimonials } from './Testimonials'
+import { Projects } from './Projects'
 
 interface BusinessCardProps {
   data: TemplateData
@@ -11,10 +12,10 @@ interface BusinessCardProps {
 }
 
 const BusinessCard: React.FC<BusinessCardProps> = ({ data, colors, fonts }) => {
-  const { hero, about, contact, social, skills, services, features, testimonials } = data
+  const { hero, about, contact, social, skills, services, features, testimonials, projects } = data
 
   // Default section order
-  const defaultSectionOrder = ['hero', 'skills', 'about', 'services', 'features', 'testimonials']
+  const defaultSectionOrder = ['hero', 'skills', 'about', 'projects', 'services', 'features', 'testimonials']
   const sectionOrder = data.sectionOrder || defaultSectionOrder
 
   // Map section IDs to their components
@@ -281,6 +282,10 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ data, colors, fonts }) => {
           </p>
         </div>
       </section>
+    ) : null,
+
+    projects: (isAlternate) => projects && projects.length > 0 ? (
+      <Projects key="projects" data={projects} colors={colors} fonts={fonts} isAlternate={isAlternate} />
     ) : null,
 
     services: (isAlternate) => services && services.items && services.items.length > 0 ? (

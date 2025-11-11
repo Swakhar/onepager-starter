@@ -11,7 +11,7 @@ import { loadAllSites, createNewSite, deleteSite } from '@/lib/storage/siteStora
 import { templates } from '@/config/templates'
 import { modernPortfolioSampleData, businessCardSampleData, creativeResumeSampleData } from '@/config/sampleData'
 
-type DashboardView = 'templates' | 'sites'
+type DashboardView = 'templates' | 'sites' | 'ai-builder'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -166,6 +166,22 @@ export default function DashboardPage() {
               </span>
             </button>
             <button
+              onClick={() => router.push('/ai-builder')}
+              className={`py-3 sm:py-4 px-2 font-medium border-b-2 transition-colors whitespace-nowrap relative ${
+                activeView === 'ai-builder'
+                  ? 'border-purple-600 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span className="text-lg sm:text-xl">🤖</span>
+                <span className="text-sm sm:text-base">AI Builder</span>
+                <span className="ml-1 px-2 py-0.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold rounded-full">
+                  NEW
+                </span>
+              </span>
+            </button>
+            <button
               onClick={() => setActiveView('templates')}
               className={`py-3 sm:py-4 px-2 font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeView === 'templates'
@@ -175,7 +191,7 @@ export default function DashboardPage() {
             >
               <span className="flex items-center gap-2">
                 <span className="text-lg sm:text-xl">✨</span>
-                <span className="text-sm sm:text-base">Create New</span>
+                <span className="text-sm sm:text-base">Templates</span>
               </span>
             </button>
           </div>
@@ -200,22 +216,75 @@ export default function DashboardPage() {
             </div>
 
             {sites.length === 0 ? (
-              <div className="text-center py-12 sm:py-20 bg-white rounded-2xl border-2 border-dashed border-gray-300">
-                <div className="max-w-md mx-auto px-4">
-                  <div className="text-5xl sm:text-7xl mb-4 sm:mb-6">🚀</div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3">
-                    No sites yet
-                  </h3>
-                  <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">
-                    Create your first website in just a few clicks. Choose from our professional templates and start building!
-                  </p>
-                  <Button 
-                    size="lg" 
-                    onClick={() => setActiveView('templates')}
-                    className="w-full sm:w-auto"
-                  >
-                    <span className="mr-2">✨</span> Browse Templates
-                  </Button>
+              <div className="space-y-6">
+                {/* AI Builder CTA Card */}
+                <Card 
+                  className="cursor-pointer hover:shadow-2xl transition-all duration-300 border-4 border-purple-500 bg-gradient-to-br from-purple-600 via-pink-600 to-red-500 text-white overflow-hidden relative group"
+                  onClick={() => router.push('/ai-builder')}
+                >
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 group-hover:scale-150 transition-transform duration-500" />
+                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24 group-hover:scale-150 transition-transform duration-500" />
+                  
+                  <CardContent className="py-12 px-8 relative z-10">
+                    <div className="text-center max-w-2xl mx-auto">
+                      <div className="text-6xl mb-4">🤖✨</div>
+                      <h3 className="text-3xl font-bold mb-3">
+                        Try Our NEW AI Builder!
+                      </h3>
+                      <p className="text-xl text-purple-100 mb-6">
+                        Just describe your website in plain English, and our AI will build it for you in 30 seconds
+                      </p>
+                      <div className="flex flex-wrap items-center justify-center gap-4 mb-8 text-sm">
+                        <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full">
+                          <span className="text-2xl">⚡</span>
+                          <span>30-60 seconds</span>
+                        </div>
+                        <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full">
+                          <span className="text-2xl">🎨</span>
+                          <span>AI-designed</span>
+                        </div>
+                        <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full">
+                          <span className="text-2xl">✏️</span>
+                          <span>Fully editable</span>
+                        </div>
+                      </div>
+                      <Button 
+                        size="lg"
+                        className="bg-white text-purple-600 hover:bg-purple-50 text-lg px-8 py-6 shadow-xl"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push('/ai-builder')
+                        }}
+                      >
+                        <span className="flex items-center gap-3">
+                          <span>🚀</span>
+                          Create with AI Builder
+                          <span>→</span>
+                        </span>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Traditional empty state below */}
+                <div className="text-center py-12 sm:py-16 bg-white rounded-2xl border-2 border-dashed border-gray-300">
+                  <div className="max-w-md mx-auto px-4">
+                    <div className="text-5xl sm:text-6xl mb-4">�</div>
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3">
+                      Or start with a template
+                    </h3>
+                    <p className="text-sm sm:text-base text-gray-600 mb-6">
+                      Choose from our professional templates and customize manually
+                    </p>
+                    <Button 
+                      size="lg" 
+                      variant="outline"
+                      onClick={() => setActiveView('templates')}
+                      className="w-full sm:w-auto"
+                    >
+                      <span className="mr-2">✨</span> Browse Templates
+                    </Button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -296,9 +365,65 @@ export default function DashboardPage() {
         {/* Templates View */}
         {activeView === 'templates' && (
           <div className="space-y-6">
+            {/* AI Builder Prominent CTA */}
+            <Card 
+              className="cursor-pointer hover:shadow-2xl transition-all duration-300 border-4 border-purple-500 bg-gradient-to-br from-purple-600 via-pink-600 to-red-500 text-white overflow-hidden relative group"
+              onClick={() => router.push('/ai-builder')}
+            >
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 group-hover:scale-150 transition-transform duration-500" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24 group-hover:scale-150 transition-transform duration-500" />
+              
+              <CardContent className="py-10 px-6 relative z-10">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="flex-1 text-center md:text-left">
+                    <div className="flex items-center gap-3 justify-center md:justify-start mb-3">
+                      <span className="text-5xl">🤖</span>
+                      <div>
+                        <h3 className="text-2xl font-bold">NEW: AI Website Builder</h3>
+                        <p className="text-purple-100">Skip templates - let AI build your site!</p>
+                      </div>
+                    </div>
+                    <p className="text-lg text-purple-100 mb-4">
+                      Just describe what you need, and our AI will generate a complete website with content, design, and layout in 30 seconds
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3 justify-center md:justify-start text-sm">
+                      <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full">
+                        <span>⚡</span>
+                        <span>30-60 seconds</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full">
+                        <span>🎨</span>
+                        <span>AI-designed</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full">
+                        <span>✏️</span>
+                        <span>Fully editable</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <Button 
+                      size="lg"
+                      className="bg-white text-purple-600 hover:bg-purple-50 text-lg px-8 py-6 shadow-xl whitespace-nowrap"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        router.push('/ai-builder')
+                      }}
+                    >
+                      <span className="flex items-center gap-3">
+                        <span>🚀</span>
+                        Try AI Builder
+                        <span>→</span>
+                      </span>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Choose a Template</h2>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">Select a professional template to start building your site</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Or choose a template manually</h2>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">Select a professional template and customize it yourself</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">{Object.values(templates).map((template) => (
