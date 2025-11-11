@@ -6,8 +6,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { Site } from '@/types/site'
-import { saveSite, loadSite, createNewSite } from '@/lib/storage/siteStorage'
+import { loadSite, saveSite, createNewSite } from '@/lib/storage/siteStorage'
 import { modernPortfolioSampleData } from '@/config/sampleData'
+import { toast } from '@/components/ui/Toast'
 
 export function useEditorState() {
   const router = useRouter()
@@ -52,7 +53,7 @@ export function useEditorState() {
       setTimeout(() => setShowSuccessToast(false), 3000)
     } catch (error) {
       console.error('Failed to save site:', error)
-      alert('Failed to save site')
+      toast.error('Failed to save site', 'Please try again or check your connection')
     } finally {
       setIsSaving(false)
     }
@@ -75,7 +76,7 @@ export function useEditorState() {
       setSite({ ...site, published: true, customDomain: withDomain || site.customDomain })
     } catch (error) {
       console.error('Failed to publish site:', error)
-      alert('Failed to publish site')
+      toast.error('Failed to publish site', 'Please try again or check your connection')
     } finally {
       setIsSaving(false)
     }

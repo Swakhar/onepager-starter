@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import { toast } from '@/components/ui/Toast'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
@@ -67,7 +68,7 @@ export default function DashboardPage() {
       setDeleteConfirm(null)
     } catch (error) {
       console.error('Failed to delete site:', error)
-      alert('Failed to delete site. Please try again.')
+      toast.error('Failed to delete site. Please try again.')
     } finally {
       setIsDeleting(false)
     }

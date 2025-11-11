@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react'
+import { toast } from '@/components/ui/Toast'
 
 interface UseVoiceCommandReturn {
   isListening: boolean
@@ -26,8 +27,8 @@ export function useVoiceCommand(onTranscript: (text: string) => void): UseVoiceC
   }, [])
 
   const startListening = useCallback(() => {
-    if (!voiceSupported) {
-      alert('⚠️ Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.')
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      toast.warning('Voice input not supported', 'Please use Chrome, Edge, or Safari for voice commands')
       return
     }
 
@@ -55,11 +56,11 @@ export function useVoiceCommand(onTranscript: (text: string) => void): UseVoiceC
       setIsListening(false)
       
       if (event.error === 'no-speech') {
-        alert('⚠️ No speech detected. Please try again.')
+        toast.warning('No speech detected', 'Please try speaking again')
       } else if (event.error === 'not-allowed') {
-        alert('⚠️ Microphone access denied. Please enable microphone permissions.')
+        toast.error('Microphone access denied', 'Please enable microphone permissions in your browser')
       } else {
-        alert(`⚠️ Voice recognition error: ${event.error}`)
+        toast.error('Voice recognition error', event.error)
       }
     }
 
@@ -70,9 +71,9 @@ export function useVoiceCommand(onTranscript: (text: string) => void): UseVoiceC
     try {
       recognition.start()
     } catch (error) {
-      console.error('Failed to start speech recognition:', error)
+      console.error('Failed to start voice recognition:', error)
+      toast.error('Failed to start voice recognition', 'Please try again')
       setIsListening(false)
-      alert('❌ Failed to start voice recognition. Please try again.')
     }
   }, [voiceSupported, onTranscript])
 

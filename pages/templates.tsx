@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import { toast } from '@/components/ui/Toast'
 import { Button } from '@/components/ui/Button'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { TemplatePreviewModal } from '@/components/ui/TemplatePreviewModal'
@@ -54,7 +55,7 @@ export default function TemplatesPage() {
       router.push(`/editor?siteId=${newSite.id}`)
     } catch (error) {
       console.error('Failed to create site:', error)
-      alert('Failed to create site. Please try again.')
+      toast.error('Failed to create site. Please try again.')
     } finally {
       setIsCreating(false)
     }

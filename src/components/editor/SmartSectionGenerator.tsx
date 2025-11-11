@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { toast } from '@/components/ui/Toast'
 import { Button } from '../ui/Button'
 
 interface SmartSectionGeneratorProps {
@@ -99,7 +100,7 @@ export const SmartSectionGenerator: React.FC<SmartSectionGeneratorProps> = ({
       // Don't close modal, show export options
     } catch (error: any) {
       console.error('Section generation error:', error)
-      alert(`Failed to generate section: ${error.message}`)
+      toast.error(`Failed to generate section: ${error.message}`)
     } finally {
       setIsGenerating(false)
     }
@@ -138,7 +139,7 @@ export const SmartSectionGenerator: React.FC<SmartSectionGeneratorProps> = ({
 
     // Copy to clipboard
     navigator.clipboard.writeText(content).then(() => {
-      alert(`✅ Content copied to clipboard as ${format.toUpperCase()}!`)
+      toast.success(`Content copied to clipboard as ${format.toUpperCase()}!`)
     })
   }
 

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from '@/components/ui/Toast'
 import { Button } from '@/components/ui/Button'
 import { Site } from '@/types/site'
 
@@ -16,7 +17,7 @@ export function ExportButtons({ site }: ExportButtonsProps) {
       : `https://${site.slug}.onepager.com`
     
     navigator.clipboard.writeText(url)
-    alert('✓ Link copied to clipboard!')
+    toast.info('✓ Link copied to clipboard!')
   }
 
   const handleEmbedCode = () => {
@@ -26,7 +27,7 @@ export function ExportButtons({ site }: ExportButtonsProps) {
     
     const embedCode = `<iframe src="${url}" width="100%" height="600" frameborder="0"></iframe>`
     navigator.clipboard.writeText(embedCode)
-    alert('✓ Embed code copied! Paste it into any website to display your page.')
+    toast.info('✓ Embed code copied! Paste it into any website to display your page.')
   }
 
   const handleQRCode = () => {
@@ -65,7 +66,7 @@ export function ExportButtons({ site }: ExportButtonsProps) {
     setIsExporting(true)
     try {
       // In production, this would use a screenshot service
-      alert('📸 Screenshot feature coming soon! This will capture a high-quality image of your site that you can download and share on social media.')
+      toast.info('📸 Screenshot feature coming soon! This will capture a high-quality image of your site that you can download and share on social media.')
     } finally {
       setIsExporting(false)
     }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from '@/components/ui/Toast'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Site } from '@/types/site'
@@ -58,10 +59,10 @@ export function SEOPanel({ site, onUpdate }: SEOPanelProps) {
         keywords: seoData.keywords,
       })
 
-      alert('✨ SEO metadata generated successfully!')
+      toast.success('✨ SEO metadata generated successfully!')
     } catch (error: any) {
       console.error('SEO generation error:', error)
-      alert(`Failed to generate SEO: ${error.message}`)
+      toast.error(`Failed to generate SEO: ${error.message}`)
     } finally {
       setIsGenerating(false)
     }

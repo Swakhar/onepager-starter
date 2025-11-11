@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { toast } from '@/components/ui/Toast'
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/Button'
 
@@ -40,7 +41,7 @@ export function AIAssistant({ currentText, onApply, context, isTextarea = false 
       setShowPreview(true)
     } catch (error: any) {
       console.error('AI generation failed:', error)
-      alert(`AI generation failed: ${error.message}. Please check your OpenAI API key in .env.local`)
+      toast.error(`AI generation failed: ${error.message}. Please check your OpenAI API key in .env.local`)
     } finally {
       setIsGenerating(false)
       setShowMenu(false)

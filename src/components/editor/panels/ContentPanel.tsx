@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Input, Textarea, Label } from '@/components/ui/Input'
+import { toast } from '@/components/ui/Toast'
 import { Button } from '@/components/ui/Button'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import { AIAssistant } from '@/components/editor/AIAssistant'
@@ -233,7 +234,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
         setActiveSection('hero')
         // Show success notification
         setTimeout(() => {
-          alert('✅ Hero section updated! Check the Hero tab to see the changes.')
+          toast.success('Hero section updated! Check the Hero tab to see the changes.')
         }, 100)
         break
         
@@ -244,7 +245,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
         }
         setActiveSection('about')
         setTimeout(() => {
-          alert('✅ About section updated! Check the About tab to see the changes.')
+          toast.success('About section updated! Check the About tab to see the changes.')
         }, 100)
         break
         
@@ -267,7 +268,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
         }
         setActiveSection('contact')
         setTimeout(() => {
-          alert('✅ Contact section updated! Check the Contact tab to see the changes.')
+          toast.success('Contact section updated! Check the Contact tab to see the changes.')
         }, 100)
         break
         
@@ -290,7 +291,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
         // Switch to the services tab after generation
         setActiveSection('services')
         setTimeout(() => {
-          alert('✅ Services section created! Check the new "🛠️ Services" tab to edit it.')
+          toast.success('Services section created! Check the new "🛠️ Services" tab to edit it.')
         }, 100)
         break
         
@@ -312,7 +313,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
         // Switch to the features tab after generation
         setActiveSection('features')
         setTimeout(() => {
-          alert('✅ Features section created! Check the new "✨ Features" tab to edit it.')
+          toast.success('Features section created! Check the new "✨ Features" tab to edit it.')
         }, 100)
         break
         
@@ -337,13 +338,13 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
         // Switch to the testimonials tab after generation
         setActiveSection('testimonials')
         setTimeout(() => {
-          alert('✅ Testimonials section created! Check the new "⭐ Testimonials" tab to edit it.')
+          toast.success('Testimonials section created! Check the new "⭐ Testimonials" tab to edit it.')
         }, 100)
         break
         
       case 'cta':
         // Show CTA content
-        alert(
+        toast.info(
           `📢 Call-to-Action Generated!\n\n` +
           `Headline: ${section.title}\n` +
           `Subtitle: ${section.subtitle || ''}\n` +
@@ -355,7 +356,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
         
       default:
         // For other section types, show the content
-        alert(
+        toast.info(
           `✨ Section Generated!\n\n` +
           `${section.title}\n\n` +
           `${section.content || ''}\n\n` +

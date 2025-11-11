@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { toast } from '@/components/ui/Toast'
 import { ColorPicker } from '../controls/ColorPicker'
 import { FontSelector } from '../controls/FontSelector'
 import { Button } from '@/components/ui/Button'
@@ -66,7 +67,7 @@ export const DesignPanel: React.FC<DesignPanelProps> = ({
       setShowPaletteModal(true)
     } catch (error: any) {
       console.error('Color generation error:', error)
-      alert(`Failed to generate colors: ${error.message}`)
+      toast.error(`Failed to generate colors: ${error.message}`)
     } finally {
       setIsGenerating(false)
     }
@@ -114,7 +115,7 @@ export const DesignPanel: React.FC<DesignPanelProps> = ({
       setShowFontsModal(true)
     } catch (error: any) {
       console.error('Font generation error:', error)
-      alert(`Failed to generate fonts: ${error.message}`)
+      toast.error(`Failed to generate fonts: ${error.message}`)
     } finally {
       setIsGeneratingFonts(false)
     }

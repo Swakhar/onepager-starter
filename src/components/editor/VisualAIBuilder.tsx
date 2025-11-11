@@ -14,6 +14,7 @@ import { ColorScheme, FontScheme, TemplateData } from '@/types/template'
 import { useVoiceCommand } from '@/hooks/useVoiceCommand'
 import { useCommandHistory } from '@/hooks/useCommandHistory'
 import { useSnapshot } from '@/hooks/useSnapshot'
+import { toast } from '@/components/ui/Toast'
 import { NaturalCommandMode } from './ai-builder/NaturalCommandMode'
 import { ScreenshotMode } from './ai-builder/ScreenshotMode'
 import { StyleTransferMode } from './ai-builder/StyleTransferMode'
@@ -98,7 +99,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
   // Restore from snapshot
   const restoreSnapshot = useCallback(() => {
     if (!beforeSnapshot) {
-      alert('⚠️ No snapshot available to restore')
+      toast.warning('⚠️ No snapshot available to restore')
       return
     }
     
@@ -109,7 +110,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
       sectionOrder: beforeSnapshot.sectionOrder,
     })
     
-    alert('✅ Design restored to before AI changes')
+    toast.success('Design restored to before AI changes')
     setShowComparison(false)
     clearSnapshot()
   }, [beforeSnapshot, onApplyChanges, clearSnapshot])
@@ -178,7 +179,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
     }
 
     onApplyChanges(changes)
-    alert('✨ Design applied successfully! Check your preview.')
+    toast.success('✨ Design applied successfully! Check your preview.')
     setResult(null)
     setScreenshotFile(null)
     setScreenshotPreview(null)
@@ -344,7 +345,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
 
       onApplyChanges(updates)
       setResult(data.updatedDesign)
-      alert(`✨ Style transferred successfully!\n\n${data.updatedDesign.explanation || 'Check your preview.'}`)
+      toast.success(`✨ Style transferred successfully!\n\n${data.updatedDesign.explanation || 'Check your preview.'}`)
     } catch (error: any) {
       setError(error.message)
     } finally {
@@ -385,7 +386,7 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
     const { action } = suggestion
 
     if (!action || !action.type || !action.params) {
-      alert('❌ Invalid suggestion: Missing action details')
+      toast.error('❌ Invalid suggestion: Missing action details')
       return
     }
 
@@ -442,15 +443,15 @@ export const VisualAIBuilder: React.FC<VisualAIBuilderProps> = ({
           break
 
         default:
-          alert(`⚠️ Unknown action type: ${action.type}`)
+          toast.warning(`⚠️ Unknown action type: ${action.type}`)
           return
       }
 
       onApplyChanges(updates)
-      alert(`✅ Applied: ${suggestion.title}\n\n${suggestion.expectedImpact || 'Change applied successfully'}`)
+      toast.success(`Applied: ${suggestion.title}\n\n${suggestion.expectedImpact || 'Change applied successfully'}`)
       setSuggestions(suggestions.filter(s => s.id !== suggestion.id))
     } catch (error: any) {
-      alert(`❌ Failed to apply suggestion: ${error.message}`)
+      toast.error(`❌ Failed to apply suggestion: ${error.message}`)
     }
   }
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
+import { toast } from '@/components/ui/Toast'
 import { Button } from './Button'
-import { Input } from './Input'
 import { Site } from '@/types/site'
 
 interface PublishModalProps {
@@ -218,7 +218,7 @@ export function PublishModal({ isOpen, onClose, site, onPublish, onOpenDomainSea
                 <Button
                   onClick={() => {
                     navigator.clipboard.writeText(`https://${site.slug}.onepager.com`)
-                    alert('Link copied to clipboard!')
+                    toast.info('Link copied to clipboard!')
                   }}
                   variant="outline"
                   className="flex-1 border-gray-700 text-white hover:bg-[#2a2a2a]"
