@@ -40,8 +40,9 @@ export interface DesignSystem {
  * 
  * TEMPLATE MAPPING:
  * - portfolio → modern-portfolio (showcase work)
- * - business/restaurant → business-card (professional services)
+ * - business → business-card (professional services)
  * - resume → creative-resume (career history)
+ * - restaurant → restaurant-elegant (fine dining with reservations)
  * - ecommerce/saas → modern-portfolio (product showcase)
  */
 export function selectTemplate(analysis: PromptAnalysis): string {
@@ -50,7 +51,7 @@ export function selectTemplate(analysis: PromptAnalysis): string {
     business: 'business-card',
     resume: 'creative-resume',
     landing: 'business-card',
-    restaurant: 'business-card',
+    restaurant: 'restaurant-elegant',
     ecommerce: 'modern-portfolio',
     saas: 'modern-portfolio',
   }
@@ -96,11 +97,11 @@ function generateColorScheme(analysis: PromptAnalysis): ColorScheme {
   // Industry-specific palettes
   const industryPalettes: Record<string, ColorScheme> = {
     restaurant: {
-      primary: '#C41E3A',      // Rich red
-      secondary: '#FFF8DC',    // Cream
-      accent: '#228B22',       // Forest green
+      primary: '#d97706',      // Amber-600 (elegant gold)
+      secondary: '#fbbf24',    // Amber-400 (soft gold)
+      accent: '#f59e0b',       // Amber-500 (warm gold)
       background: '#FFFFFF',
-      backgroundAlt: '#F9FAFB',
+      backgroundAlt: '#FFFBEB', // Amber-50 (cream)
       text: '#1F2937',
       textSecondary: '#6B7280'
     },

@@ -2,7 +2,7 @@ export interface TemplateConfig {
   id: string
   name: string
   description: string
-  category: 'portfolio' | 'resume' | 'business' | 'landing' | 'other'
+  category: 'portfolio' | 'resume' | 'business' | 'landing' | 'restaurant' | 'other'
   thumbnail: string
   isPremium: boolean
   sections: TemplateSectionConfig[]
@@ -13,7 +13,7 @@ export interface TemplateConfig {
 export interface TemplateSectionConfig {
   id: string
   name: string
-  type: 'hero' | 'about' | 'projects' | 'skills' | 'contact' | 'custom'
+  type: 'hero' | 'about' | 'projects' | 'skills' | 'contact' | 'menu' | 'gallery' | 'testimonials' | 'reservations' | 'footer' | 'custom'
   isRequired: boolean
   isReorderable: boolean
 }
@@ -93,6 +93,8 @@ export interface TestimonialItem {
   company?: string
   avatar?: string
   rating?: number
+  image?: string  // Restaurant: customer photo
+  date?: string   // Restaurant: review date
 }
 
 export interface TemplateData {
@@ -107,15 +109,89 @@ export interface TemplateData {
   services?: ServicesData
   features?: FeaturesData
   testimonials?: TestimonialsData
+  // Restaurant-specific
+  menu?: MenuData
+  gallery?: GalleryData
+  reservations?: ReservationsData
+  footer?: FooterData
   sectionOrder?: string[] // NEW: Custom section order for drag-and-drop
   [key: string]: any // Allow custom sections
 }
 
-export interface HeroData {
+// Restaurant-specific interfaces
+export interface MenuData {
   title: string
-  subtitle: string
+  subtitle?: string
+  items: MenuItem[]
+}
+
+export interface MenuItem {
+  id: string
+  name: string
   description: string
+  price: string
+  category: string
   image?: string
+  isSpecial?: boolean
+  rating?: number
+  tags?: string[]
+}
+
+export interface GalleryData {
+  title: string
+  subtitle?: string
+  images: GalleryImage[]
+}
+
+export interface GalleryImage {
+  id: string
+  src: string
+  alt: string
+  category?: string
+}
+
+export interface ReservationsData {
+  title: string
+  subtitle?: string
+  description?: string
+}
+
+export interface FooterData {
+  about?: {
+    title: string
+    description: string
+  }
+  services?: Array<{
+    title: string
+    link?: string
+  }>
+  blog?: Array<{
+    title: string
+    date: string
+    author: string
+    comments: number
+    link?: string
+  }>
+}
+
+
+export interface HeroData {
+  title?: string
+  subtitle?: string
+  description?: string
+  image?: string
+  backgroundImage?: string
+  badge?: string  // Restaurant: "Welcome", "Delicious", etc.
+  slides?: Array<{  // Restaurant: Hero slider
+    id: string
+    badge?: string
+    title: string
+    subtitle?: string
+    description: string
+    image: string
+    ctaPrimary?: { text: string; link: string }
+    ctaSecondary?: { text: string; link: string }
+  }>
   cta?: {
     primary?: { text: string; link: string }
     secondary?: { text: string; link: string }
@@ -124,9 +200,21 @@ export interface HeroData {
 
 export interface AboutData {
   title: string
+  subtitle?: string  // Restaurant: section subtitle
   description: string
+  story?: string  // Restaurant: additional story/history
   image?: string
+  images?: string[]  // Restaurant: multiple images
   highlights?: string[]
+  features?: Array<{  // Restaurant: features with icons
+    icon: string
+    title: string
+    description: string
+  }>
+  stats?: Array<{  // Restaurant: statistics
+    number: string
+    label: string
+  }>
 }
 
 export interface ProjectData {
@@ -173,5 +261,8 @@ export interface ContactData {
   email?: string
   phone?: string
   location?: string
+  address?: string  // Restaurant: full address
+  hours?: string    // Restaurant: opening hours
   showForm?: boolean
+  description?: string
 }

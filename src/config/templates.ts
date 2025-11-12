@@ -64,6 +64,37 @@ export const templates: Record<string, TemplateConfig> = {
       headingSizes,
     },
   },
+  'restaurant-elegant': {
+    id: 'restaurant-elegant',
+    name: 'Restaurant Elegant',
+    description: 'Premium template for fine dining restaurants with elegant design and reservations',
+    category: 'restaurant',
+    thumbnail: '/templates/restaurant-elegant.png',
+    isPremium: false,
+    sections: [
+      { id: 'hero', name: 'Hero Slider', type: 'hero', isRequired: true, isReorderable: false },
+      { id: 'about', name: 'About Us', type: 'about', isRequired: true, isReorderable: true },
+      { id: 'menu', name: 'Menu', type: 'menu', isRequired: true, isReorderable: true },
+      { id: 'gallery', name: 'Gallery', type: 'gallery', isRequired: false, isReorderable: true },
+      { id: 'testimonials', name: 'Testimonials', type: 'testimonials', isRequired: false, isReorderable: true },
+      { id: 'reservations', name: 'Reservations', type: 'reservations', isRequired: true, isReorderable: true },
+      { id: 'footer', name: 'Footer', type: 'footer', isRequired: true, isReorderable: false },
+    ],
+    defaultColors: {
+      primary: '#d97706', // Amber-600
+      secondary: '#fbbf24', // Amber-400
+      accent: '#f59e0b', // Amber-500
+      background: '#ffffff',
+      backgroundAlt: '#FFFBEB', // Amber-50 (cream)
+      text: '#1f2937', // Gray-800
+      textSecondary: '#6b7280', // Gray-500
+    },
+    defaultFonts: {
+      heading: 'Playfair Display',
+      body: 'Inter',
+      headingSizes,
+    },
+  },
 }
 
 export const getTemplate = (id: string): TemplateConfig | undefined => {

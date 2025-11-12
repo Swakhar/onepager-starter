@@ -277,3 +277,330 @@ export const creativeResumeSampleData: TemplateData = {
     website: 'https://michaelrodriguez.dev',
   },
 }
+
+export const restaurantElegantSampleData: TemplateData = {
+  hero: {
+    slides: [
+      {
+        id: '1',
+        badge: 'Welcome',
+        title: 'ITALIAN CUISINE',
+        subtitle: 'Authentic Flavors',
+        description: 'Experience the finest Italian dining with our chef\'s special recipes passed down through generations.',
+        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&h=1080&fit=crop',
+        ctaPrimary: { text: 'View Menu', link: '#menu' },
+        ctaSecondary: { text: 'Book Table', link: '#reservations' }
+      },
+      {
+        id: '2',
+        badge: 'Delicious',
+        title: 'HANDCRAFTED PASTA',
+        subtitle: 'Made Fresh Daily',
+        description: 'Our pasta is made fresh every morning using traditional Italian techniques and the finest ingredients.',
+        image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=1920&h=1080&fit=crop',
+        ctaPrimary: { text: 'Order Now', link: '#menu' },
+        ctaSecondary: { text: 'View Menu', link: '#menu' }
+      },
+      {
+        id: '3',
+        badge: 'Elegant',
+        title: 'FINE DINING EXPERIENCE',
+        subtitle: 'Unforgettable Moments',
+        description: 'Join us for an evening of exceptional food, wine, and ambiance in our elegant dining room.',
+        image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1920&h=1080&fit=crop',
+        ctaPrimary: { text: 'Reserve Now', link: '#reservations' },
+        ctaSecondary: { text: 'Learn More', link: '#about' }
+      }
+    ]
+  },
+  about: {
+    title: 'About Us',
+    subtitle: 'Our Story',
+    description: 'Bella Italia brings authentic Italian cuisine to your table. Founded in 1995 by Chef Giovanni Rossi, our restaurant has been a cornerstone of fine dining, serving traditional recipes with a modern twist.',
+    story: 'Our passion for food and dedication to quality has earned us numerous accolades over the years. Every dish is crafted with love and the freshest ingredients sourced from local markets and imported directly from Italy.',
+    features: [
+      {
+        icon: 'award',
+        title: 'Award Winning',
+        description: 'Recognized by Michelin Guide for exceptional cuisine'
+      },
+      {
+        icon: 'heart',
+        title: 'Made with Love',
+        description: 'Every dish prepared with passion and authentic recipes'
+      },
+      {
+        icon: 'users',
+        title: 'Family Tradition',
+        description: 'Recipes passed down through generations'
+      },
+      {
+        icon: 'clock',
+        title: 'Fresh Daily',
+        description: 'Ingredients sourced fresh every morning'
+      }
+    ],
+    images: [
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=1000&fit=crop',
+      'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=500&fit=crop',
+      'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=500&fit=crop'
+    ],
+    stats: [
+      { number: '28+', label: 'Years' },
+      { number: '150K', label: 'Happy Guests' },
+      { number: '50+', label: 'Dishes' }
+    ]
+  },
+  menu: {
+    title: 'Our Menu',
+    subtitle: 'Culinary Excellence',
+    items: [
+      {
+        id: 'menu-1',
+        name: 'Bruschetta al Pomodoro',
+        description: 'Toasted bread topped with fresh tomatoes, basil, garlic, and extra virgin olive oil',
+        price: '$12',
+        category: 'appetizers',
+        image: 'https://images.unsplash.com/photo-1572695157366-5e585ab2b69f?w=400&h=300&fit=crop',
+        rating: 5,
+        tags: ['Vegetarian', 'Popular']
+      },
+      {
+        id: 'menu-2',
+        name: 'Caprese Salad',
+        description: 'Fresh mozzarella, ripe tomatoes, and basil drizzled with balsamic glaze',
+        price: '$14',
+        category: 'appetizers',
+        image: 'https://images.unsplash.com/photo-1608897013039-887f21d8c804?w=400&h=300&fit=crop',
+        rating: 5,
+        tags: ['Vegetarian', 'Gluten-Free']
+      },
+      {
+        id: 'menu-3',
+        name: 'Spaghetti Carbonara',
+        description: 'Classic Roman pasta with eggs, pecorino cheese, guanciale, and black pepper',
+        price: '$24',
+        category: 'main course',
+        image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400&h=300&fit=crop',
+        isSpecial: true,
+        rating: 5,
+        tags: ['Chef\'s Special', 'Traditional']
+      },
+      {
+        id: 'menu-4',
+        name: 'Osso Buco',
+        description: 'Braised veal shanks with saffron risotto and gremolata',
+        price: '$38',
+        category: 'main course',
+        image: 'https://images.unsplash.com/photo-1633964913295-ceb43826e36f?w=400&h=300&fit=crop',
+        isSpecial: true,
+        rating: 5,
+        tags: ['Chef\'s Special', 'Premium']
+      },
+      {
+        id: 'menu-5',
+        name: 'Margherita Pizza',
+        description: 'San Marzano tomatoes, fresh mozzarella, basil, extra virgin olive oil',
+        price: '$18',
+        category: 'main course',
+        image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop',
+        rating: 5,
+        tags: ['Vegetarian', 'Popular']
+      },
+      {
+        id: 'menu-6',
+        name: 'Branzino al Forno',
+        description: 'Oven-baked Mediterranean sea bass with lemon, herbs, and roasted vegetables',
+        price: '$32',
+        category: 'main course',
+        image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&h=300&fit=crop',
+        rating: 4,
+        tags: ['Gluten-Free', 'Fresh']
+      },
+      {
+        id: 'menu-7',
+        name: 'Tiramisu',
+        description: 'Classic Italian dessert with espresso-soaked ladyfingers and mascarpone cream',
+        price: '$10',
+        category: 'desserts',
+        image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=300&fit=crop',
+        rating: 5,
+        tags: ['Signature', 'Popular']
+      },
+      {
+        id: 'menu-8',
+        name: 'Panna Cotta',
+        description: 'Silky vanilla cream with berry compote',
+        price: '$9',
+        category: 'desserts',
+        image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400&h=300&fit=crop',
+        rating: 4,
+        tags: ['Gluten-Free']
+      },
+      {
+        id: 'menu-9',
+        name: 'Espresso',
+        description: 'Authentic Italian espresso from premium Arabica beans',
+        price: '$4',
+        category: 'beverages',
+        rating: 5,
+        tags: ['Traditional']
+      },
+      {
+        id: 'menu-10',
+        name: 'House Chianti',
+        description: 'Premium Tuscan red wine, full-bodied with notes of cherry and spice',
+        price: '$12',
+        category: 'beverages',
+        rating: 5,
+        tags: ['Wine', 'Premium']
+      }
+    ]
+  },
+  gallery: {
+    title: 'Gallery',
+    subtitle: 'Our Restaurant',
+    images: [
+      {
+        id: 'gallery-1',
+        src: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop',
+        alt: 'Restaurant interior',
+        category: 'Interior'
+      },
+      {
+        id: 'gallery-2',
+        src: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=1200&fit=crop',
+        alt: 'Italian pasta dish',
+        category: 'Food'
+      },
+      {
+        id: 'gallery-3',
+        src: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop',
+        alt: 'Dining table setup',
+        category: 'Interior'
+      },
+      {
+        id: 'gallery-4',
+        src: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&h=1200&fit=crop',
+        alt: 'Pizza preparation',
+        category: 'Food'
+      },
+      {
+        id: 'gallery-5',
+        src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop',
+        alt: 'Fine dining atmosphere',
+        category: 'Interior'
+      },
+      {
+        id: 'gallery-6',
+        src: 'https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f?w=800&h=600&fit=crop',
+        alt: 'Gourmet dessert',
+        category: 'Food'
+      },
+      {
+        id: 'gallery-7',
+        src: 'https://images.unsplash.com/photo-1592861956120-e524fc739696?w=800&h=1200&fit=crop',
+        alt: 'Wine cellar',
+        category: 'Interior'
+      },
+      {
+        id: 'gallery-8',
+        src: 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&h=600&fit=crop',
+        alt: 'Private dining event',
+        category: 'Events'
+      }
+    ]
+  },
+  testimonials: {
+    title: 'What Our Guests Say',
+    subtitle: 'Customer Reviews',
+    items: [
+      {
+        id: 'test-1',
+        content: 'Absolutely incredible dining experience! The pasta was perfection, and the service was impeccable. This is authentic Italian cuisine at its finest.',
+        author: 'Sarah Johnson',
+        role: 'Food Critic',
+        company: 'Gourmet Magazine',
+        rating: 5,
+        date: 'Oct 2025'
+      },
+      {
+        id: 'test-2',
+        content: 'Best Italian restaurant I\'ve been to outside of Italy. The ambiance is perfect for a romantic dinner, and every dish exceeded our expectations.',
+        author: 'Michael Chen',
+        role: 'Regular Customer',
+        rating: 5,
+        date: 'Nov 2025'
+      },
+      {
+        id: 'test-3',
+        content: 'The tiramisu alone is worth the visit! Chef Giovanni\'s attention to detail and use of authentic ingredients makes this place truly special.',
+        author: 'Emma Rodriguez',
+        role: 'Travel Blogger',
+        rating: 5,
+        date: 'Nov 2025'
+      },
+      {
+        id: 'test-4',
+        content: 'We celebrated our anniversary here and it was magical. From the wine selection to the dessert, everything was perfect. Highly recommended!',
+        author: 'David & Lisa Thompson',
+        role: 'Guests',
+        rating: 5,
+        date: 'Sept 2025'
+      }
+    ]
+  },
+  reservations: {
+    title: 'Book Your Table',
+    subtitle: 'Reserve Now',
+    description: 'Reserve your table for an unforgettable dining experience. We recommend booking in advance, especially for weekend dinners.'
+  },
+  contact: {
+    phone: '+1 (555) 789-0123',
+    email: 'info@bellaitalia.com',
+    address: '456 Culinary Boulevard, Downtown District, New York, NY 10001',
+    hours: 'Monday - Thursday: 5:00 PM - 10:00 PM\nFriday - Saturday: 5:00 PM - 11:00 PM\nSunday: 4:00 PM - 9:00 PM'
+  },
+  footer: {
+    about: {
+      title: 'Bella Italia',
+      description: 'Bringing authentic Italian flavors and traditions to your table since 1995. Every dish tells a story of passion, heritage, and culinary excellence.'
+    },
+    services: [
+      { title: 'Dine In', link: '#menu' },
+      { title: 'Private Events', link: '#reservations' },
+      { title: 'Catering', link: '#contact' },
+      { title: 'Gift Cards', link: '#contact' },
+      { title: 'Wine Tasting', link: '#reservations' }
+    ],
+    blog: [
+      {
+        title: 'The Art of Making Perfect Carbonara',
+        date: 'Nov 10, 2025',
+        author: 'Chef Giovanni',
+        comments: 24,
+        link: '#'
+      },
+      {
+        title: 'Wine Pairing Guide for Italian Cuisine',
+        date: 'Nov 5, 2025',
+        author: 'Sommelier Marco',
+        comments: 18,
+        link: '#'
+      },
+      {
+        title: 'Behind the Scenes: A Day in Our Kitchen',
+        date: 'Oct 28, 2025',
+        author: 'Chef Giovanni',
+        comments: 32,
+        link: '#'
+      }
+    ]
+  },
+  social: {
+    facebook: 'https://facebook.com/bellaitalia',
+    instagram: 'https://instagram.com/bellaitalia',
+    twitter: 'https://twitter.com/bellaitalia',
+    youtube: 'https://youtube.com/bellaitalia'
+  },
+}
