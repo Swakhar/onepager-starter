@@ -13,12 +13,14 @@ import { DeviceView } from '@/hooks/useDeviceView'
 const ModernPortfolio = dynamic(() => import('@/components/templates/modern-portfolio'))
 const BusinessCard = dynamic(() => import('@/components/templates/business-card'))
 const CreativeResume = dynamic(() => import('@/components/templates/creative-resume'))
+const RestaurantElegant = dynamic(() => import('@/components/templates/restaurant-elegant'))
 
 // Template component mapping
 const templateComponents: Record<string, React.ComponentType<{ data: TemplateData; colors: ColorScheme; fonts: FontScheme }>> = {
   'modern-portfolio': ModernPortfolio as any,
   'business-card': BusinessCard as any,
   'creative-resume': CreativeResume as any,
+  'restaurant-elegant': RestaurantElegant as any,
 }
 
 interface PreviewAreaProps {

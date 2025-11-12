@@ -7,7 +7,7 @@ import { Tooltip } from '@/components/ui/Tooltip'
 import { TemplatePreviewModal } from '@/components/ui/TemplatePreviewModal'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
 import { templates } from '@/config/templates'
-import { modernPortfolioSampleData, businessCardSampleData, creativeResumeSampleData } from '@/config/sampleData'
+import { modernPortfolioSampleData, businessCardSampleData, creativeResumeSampleData, restaurantElegantSampleData } from '@/config/sampleData'
 import { createNewSite, saveSite } from '@/lib/storage/siteStorage'
 
 export default function TemplatesPage() {
@@ -31,6 +31,7 @@ export default function TemplatesPage() {
       case 'portfolio': return '💼'
       case 'resume': return '📄'
       case 'business': return '💳'
+      case 'restaurant': return '🍽️'
       case 'landing': return '🚀'
       default: return '📄'
     }
@@ -41,6 +42,7 @@ export default function TemplatesPage() {
       case 'modern-portfolio': return modernPortfolioSampleData
       case 'business-card': return businessCardSampleData
       case 'creative-resume': return creativeResumeSampleData
+      case 'restaurant-elegant': return restaurantElegantSampleData
       default: return {}
     }
   }

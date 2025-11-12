@@ -18,7 +18,7 @@ interface ContentPanelProps {
   onSectionOrderChange?: (order: string[]) => void // ADDED: Callback to update section order
 }
 
-type Section = 'hero' | 'about' | 'projects' | 'skills' | 'contact' | 'social' | 'services' | 'features' | 'testimonials' | 'layout' | 'experience' | 'education'
+type Section = 'hero' | 'about' | 'projects' | 'skills' | 'contact' | 'social' | 'services' | 'features' | 'testimonials' | 'layout' | 'experience' | 'education' | 'menu' | 'gallery' | 'reservations' | 'footer'
 
 export const ContentPanel: React.FC<ContentPanelProps> = ({ 
   data, 
@@ -376,6 +376,10 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     { id: 'services', label: 'Services', icon: '🛠️' },
     { id: 'features', label: 'Features', icon: '✨' },
     { id: 'testimonials', label: 'Testimonials', icon: '⭐' },
+    { id: 'menu', label: 'Menu', icon: '🍽️' },
+    { id: 'gallery', label: 'Gallery', icon: '📸' },
+    { id: 'reservations', label: 'Reservations', icon: '📅' },
+    { id: 'footer', label: 'Footer', icon: '📄' },
     { id: 'contact', label: 'Contact', icon: '📧' },
     { id: 'social', label: 'Social', icon: '🔗' },
   ]
@@ -385,6 +389,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     'modern-portfolio': ['layout', 'hero', 'about', 'projects', 'services', 'features', 'testimonials', 'contact', 'social'],
     'business-card': ['layout', 'hero', 'about', 'skills', 'projects', 'services', 'features', 'testimonials', 'contact', 'social'],
     'creative-resume': ['hero', 'about', 'experience', 'education', 'projects', 'skills', 'services', 'features', 'testimonials', 'contact', 'social'],
+    'restaurant-elegant': ['layout', 'hero', 'about', 'menu', 'gallery', 'testimonials', 'reservations', 'footer', 'contact', 'social'],
   }
 
   // Filter sections based on template AND whether content exists
@@ -425,6 +430,20 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     }
     if (section.id === 'testimonials') {
       return data.testimonials && data.testimonials.items && data.testimonials.items.length > 0
+    }
+    
+    // Restaurant sections - only show if content exists
+    if (section.id === 'menu') {
+      return data.menu && data.menu.items && data.menu.items.length > 0
+    }
+    if (section.id === 'gallery') {
+      return data.gallery && data.gallery.images && data.gallery.images.length > 0
+    }
+    if (section.id === 'reservations') {
+      return data.reservations !== undefined
+    }
+    if (section.id === 'footer') {
+      return data.footer !== undefined
     }
     
     // Experience and Education - only for creative-resume
@@ -2419,6 +2438,318 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Menu Section - Restaurant */}
+        {activeSection === 'menu' && data.menu && (
+          <div className="p-5 space-y-5 animate-fadeIn">
+            <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-xl shadow-md">
+                🍽️
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Menu</h3>
+                <p className="text-xs text-gray-500">Your delicious dishes</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Menu Title</Label>
+                <Input
+                  value={data.menu.title || 'Our Menu'}
+                  onChange={(e) => onDataChange({ ...data, menu: { ...data.menu!, title: e.target.value } })}
+                  placeholder="Our Menu"
+                />
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Subtitle</Label>
+                <Input
+                  value={data.menu.subtitle || ''}
+                  onChange={(e) => onDataChange({ ...data, menu: { ...data.menu!, subtitle: e.target.value } })}
+                  placeholder="Discover the Finest Italian Flavors"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <Label className="text-sm font-medium text-gray-700">Menu Items</Label>
+                  <span className="px-2 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700 rounded-full">
+                    {data.menu.items?.length || 0} items
+                  </span>
+                </div>
+
+                {data.menu.items && data.menu.items.length > 0 ? (
+                  <div className="space-y-3">
+                    {data.menu.items.map((item: any, index: number) => (
+                      <div key={item.id || index} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex items-start justify-between mb-2">
+                          <Input
+                            value={item.name}
+                            onChange={(e) => {
+                              const newItems = [...data.menu!.items!]
+                              newItems[index] = { ...item, name: e.target.value }
+                              onDataChange({ ...data, menu: { ...data.menu!, items: newItems } })
+                            }}
+                            placeholder="Dish Name"
+                            className="font-semibold flex-1 mr-2"
+                          />
+                          <button
+                            onClick={() => {
+                              const newItems = data.menu!.items!.filter((_: any, i: number) => i !== index)
+                              onDataChange({ ...data, menu: { ...data.menu!, items: newItems } })
+                            }}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2 mb-2">
+                          <Input
+                            value={item.price}
+                            onChange={(e) => {
+                              const newItems = [...data.menu!.items!]
+                              newItems[index] = { ...item, price: e.target.value }
+                              onDataChange({ ...data, menu: { ...data.menu!, items: newItems } })
+                            }}
+                            placeholder="$0"
+                            className="text-sm"
+                          />
+                          <select
+                            value={item.category}
+                            onChange={(e) => {
+                              const newItems = [...data.menu!.items!]
+                              newItems[index] = { ...item, category: e.target.value }
+                              onDataChange({ ...data, menu: { ...data.menu!, items: newItems } })
+                            }}
+                            className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm"
+                          >
+                            <option value="appetizers">Appetizers</option>
+                            <option value="main course">Main Course</option>
+                            <option value="desserts">Desserts</option>
+                            <option value="beverages">Beverages</option>
+                          </select>
+                        </div>
+                        
+                        <Textarea
+                          value={item.description}
+                          onChange={(e) => {
+                            const newItems = [...data.menu!.items!]
+                            newItems[index] = { ...item, description: e.target.value }
+                            onDataChange({ ...data, menu: { ...data.menu!, items: newItems } })
+                          }}
+                          placeholder="Description"
+                          rows={2}
+                          className="text-sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                    <span className="text-3xl mb-2 block">🍽️</span>
+                    <p className="text-sm text-gray-600">No menu items yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Gallery Section - Restaurant */}
+        {activeSection === 'gallery' && data.gallery && (
+          <div className="p-5 space-y-5 animate-fadeIn">
+            <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-xl shadow-md">
+                📸
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Gallery</h3>
+                <p className="text-xs text-gray-500">Showcase your restaurant</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Gallery Title</Label>
+                <Input
+                  value={data.gallery.title || 'Gallery'}
+                  onChange={(e) => onDataChange({ ...data, gallery: { ...data.gallery!, title: e.target.value } })}
+                  placeholder="Gallery"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <Label className="text-sm font-medium text-gray-700">Gallery Images</Label>
+                  <span className="px-2 py-0.5 text-xs font-semibold bg-pink-100 text-pink-700 rounded-full">
+                    {data.gallery.images?.length || 0} images
+                  </span>
+                </div>
+
+                {data.gallery.images && data.gallery.images.length > 0 ? (
+                  <div className="space-y-3">
+                    {data.gallery.images.map((image: any, index: number) => (
+                      <div key={image.id || index} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1 space-y-2">
+                            <Input
+                              value={image.src}
+                              onChange={(e) => {
+                                const newImages = [...data.gallery!.images!]
+                                newImages[index] = { ...image, src: e.target.value }
+                                onDataChange({ ...data, gallery: { ...data.gallery!, images: newImages } })
+                              }}
+                              placeholder="Image URL"
+                              className="text-sm"
+                            />
+                            <Input
+                              value={image.alt}
+                              onChange={(e) => {
+                                const newImages = [...data.gallery!.images!]
+                                newImages[index] = { ...image, alt: e.target.value }
+                                onDataChange({ ...data, gallery: { ...data.gallery!, images: newImages } })
+                              }}
+                              placeholder="Image description"
+                              className="text-sm"
+                            />
+                            <select
+                              value={image.category}
+                              onChange={(e) => {
+                                const newImages = [...data.gallery!.images!]
+                                newImages[index] = { ...image, category: e.target.value }
+                                onDataChange({ ...data, gallery: { ...data.gallery!, images: newImages } })
+                              }}
+                              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm"
+                            >
+                              <option value="Interior">Interior</option>
+                              <option value="Food">Food</option>
+                              <option value="Events">Events</option>
+                            </select>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const newImages = data.gallery!.images!.filter((_: any, i: number) => i !== index)
+                              onDataChange({ ...data, gallery: { ...data.gallery!, images: newImages } })
+                            }}
+                            className="ml-2 w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                    <span className="text-3xl mb-2 block">📸</span>
+                    <p className="text-sm text-gray-600">No gallery images yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reservations Section - Restaurant */}
+        {activeSection === 'reservations' && data.reservations && (
+          <div className="p-5 space-y-5 animate-fadeIn">
+            <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-xl shadow-md">
+                📅
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Reservations</h3>
+                <p className="text-xs text-gray-500">Booking information</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Title</Label>
+                <Input
+                  value={data.reservations.title || 'Book a Table'}
+                  onChange={(e) => onDataChange({ ...data, reservations: { ...data.reservations!, title: e.target.value } })}
+                  placeholder="Book a Table"
+                />
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Subtitle</Label>
+                <Input
+                  value={data.reservations.subtitle || ''}
+                  onChange={(e) => onDataChange({ ...data, reservations: { ...data.reservations!, subtitle: e.target.value } })}
+                  placeholder="Reserve Now"
+                />
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Description</Label>
+                <Textarea
+                  value={data.reservations.description || ''}
+                  onChange={(e) => onDataChange({ ...data, reservations: { ...data.reservations!, description: e.target.value } })}
+                  placeholder="Reserve your table for an unforgettable dining experience"
+                  rows={3}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Footer Section - Restaurant */}
+        {activeSection === 'footer' && data.footer && (
+          <div className="p-5 space-y-5 animate-fadeIn">
+            <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-500 to-slate-600 flex items-center justify-center text-xl shadow-md">
+                📄
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Footer</h3>
+                <p className="text-xs text-gray-500">Footer content and links</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm font-medium text-gray-700">About Section Title</Label>
+                <Input
+                  value={data.footer.about?.title || ''}
+                  onChange={(e) => onDataChange({ 
+                    ...data, 
+                    footer: { 
+                      ...data.footer!, 
+                      about: { 
+                        title: e.target.value,
+                        description: data.footer!.about?.description || ''
+                      } 
+                    } 
+                  })}
+                  placeholder="About Us"
+                />
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-gray-700">About Description</Label>
+                <Textarea
+                  value={data.footer.about?.description || ''}
+                  onChange={(e) => onDataChange({ 
+                    ...data, 
+                    footer: { 
+                      ...data.footer!, 
+                      about: { 
+                        title: data.footer!.about?.title || 'About Us',
+                        description: e.target.value
+                      } 
+                    } 
+                  })}
+                  placeholder="Brief description about your restaurant"
+                  rows={3}
+                />
+              </div>
+            </div>
           </div>
         )}
 

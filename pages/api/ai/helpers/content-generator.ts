@@ -75,6 +75,123 @@ export interface GeneratedContent {
 }
 
 /**
+ * Generate minimal fallback content if AI fails
+ */
+function generateFallbackContent(analysis: PromptAnalysis): GeneratedContent {
+  return {
+    hero: {
+      title: analysis.siteName,
+      subtitle: `Professional ${analysis.industry} Services`,
+      description: analysis.description || 'Welcome to our website',
+      cta: {
+        primary: {
+          text: 'Get Started',
+          link: '#contact'
+        }
+      }
+    },
+    about: {
+      title: 'About Us',
+      description: `We are a professional ${analysis.industry.toLowerCase()} business committed to excellence.`
+    },
+    contact: {
+      email: 'contact@example.com',
+      phone: '+1 (555) 123-4567',
+      location: 'San Francisco, CA'
+    }
+  }
+}
+
+/**
+ * Generate minimal fallback content for restaurant template
+ */
+function generateFallbackRestaurantContent(analysis: PromptAnalysis): any {
+  return {
+    hero: {
+      slides: [{
+        id: '1',
+        badge: 'Welcome',
+        title: analysis.siteName,
+        subtitle: 'Authentic Culinary Experience',
+        description: analysis.description || 'Experience the finest dining',
+        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836',
+        ctaPrimary: { text: 'View Menu', link: '#menu' },
+        ctaSecondary: { text: 'Reserve Now', link: '#reservations' }
+      }]
+    },
+    about: {
+      title: 'About Us',
+      subtitle: 'Our Story',
+      description: 'Welcome to ' + analysis.siteName + '. We bring authentic flavors and exceptional service to every dish.',
+      features: [
+        { icon: 'award', title: 'Award Winning', description: 'Recognized for culinary excellence' },
+        { icon: 'heart', title: 'Made with Love', description: 'Every dish prepared with passion' },
+        { icon: 'users', title: 'Family Friendly', description: 'Perfect for all occasions' }
+      ],
+      images: [
+        'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
+        'https://images.unsplash.com/photo-1555396273-367ea4eb4db5',
+        'https://images.unsplash.com/photo-1504674900247-0877df9cc836'
+      ]
+    },
+    menu: {
+      title: 'Our Menu',
+      subtitle: 'Culinary Delights',
+      items: [
+        {
+          id: 'item-1',
+          name: 'Chef\'s Signature Pasta',
+          description: 'Handmade pasta with seasonal ingredients and house-made sauce',
+          price: '$28',
+          category: 'main course',
+          rating: 5,
+          tags: ['Chef\'s Special', 'Popular']
+        },
+        {
+          id: 'item-2',
+          name: 'Grilled Seafood Platter',
+          description: 'Fresh catch of the day with roasted vegetables',
+          price: '$42',
+          category: 'main course',
+          rating: 5,
+          tags: ['Fresh', 'Gluten-Free']
+        }
+      ]
+    },
+    testimonials: {
+      title: 'What Our Guests Say',
+      subtitle: 'Reviews',
+      items: [
+        {
+          id: 'testimonial-1',
+          content: 'Absolutely amazing experience! The food quality and service exceeded all expectations.',
+          author: 'Sarah Johnson',
+          role: 'Food Critic',
+          rating: 5,
+          date: 'Nov 2025'
+        }
+      ]
+    },
+    reservations: {
+      title: 'Book Your Table',
+      subtitle: 'Reserve Now',
+      description: 'Reserve your table for an unforgettable dining experience'
+    },
+    contact: {
+      phone: '+1 (555) 123-4567',
+      email: 'info@restaurant.com',
+      address: '123 Main Street, City, State 12345',
+      hours: 'Mon-Fri: 11:00 AM - 10:00 PM\nSat-Sun: 10:00 AM - 11:00 PM'
+    },
+    social: {
+      facebook: 'https://facebook.com/restaurant',
+      instagram: 'https://instagram.com/restaurant',
+      twitter: 'https://twitter.com/restaurant'
+    }
+  }
+}
+
+/**
  * Generate website content based on analysis
  * 
  * @param analysis - Prompt analysis results
@@ -106,7 +223,45 @@ export async function generateContent(
   
   console.log(`📋 Template: ${templateId}, Generate Projects: ${shouldGenerateProjects}`)
 
-  // Build dynamic system prompt
+  // Use restaurant-specific prompt for restaurant template
+  if (templateId === 'restaurant-elegant') {
+    const systemPrompt = buildRestaurantContentPrompt(analysis)
+    const userMessage = `Generate website content for this restaurant:
+Name: ${analysis.siteName}
+Description: ${analysis.description}
+Cuisine Type: ${analysis.industry}
+Tone: ${analysis.tone}
+Features: ${analysis.features.join(', ') || 'fine dining, reservations'}`
+
+    try {
+      const response = await callOpenAI({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ],
+        temperature: 0.8,
+        maxTokens: 2500, // More tokens for restaurant content
+      }, isPremium)
+
+      let content = parseOpenAIJSON<any>(response.content, 'content generation')
+      content = normalizeKeys(content)
+      content = validateRestaurantContent(content, analysis)
+
+      console.log('✅ Restaurant content generation complete:', {
+        sections: Object.keys(content).length,
+        menuItems: content.menu?.items?.length || 0,
+        testimonials: content.testimonials?.items?.length || 0,
+      })
+
+      contentGenerationCache.set(cacheKey, content)
+      return content
+    } catch (error) {
+      console.error('❌ Restaurant content generation failed:', error)
+      return generateFallbackRestaurantContent(analysis)
+    }
+  }
+
+  // Build dynamic system prompt for other templates
   const systemPrompt = buildContentPrompt(analysis, shouldGenerateProjects)
 
   const userMessage = `Generate website content for:
@@ -155,17 +310,21 @@ Features: ${analysis.features.join(', ') || 'standard website features'}`
 }
 
 /**
- * Determine if projects section should be generated
+ * Determine if we should generate projects section
  * 
- * LOGIC:
- * - modern-portfolio: Always YES
- * - creative-resume: Always YES
- * - business-card: Only if explicitly mentioned in features/description
+ * Template-aware logic:
+ * - modern-portfolio: Always include projects
+ * - creative-resume: Always include projects
+ * - business-card: Only if explicitly mentioned in prompt
+ * - restaurant-elegant: Never include projects (uses menu instead)
  */
-function determineProjectsGeneration(
-  analysis: PromptAnalysis,
-  templateId: string
-): boolean {
+function determineProjectsGeneration(analysis: PromptAnalysis, templateId: string): boolean {
+  // Restaurant template never has projects
+  if (templateId === 'restaurant-elegant') {
+    return false
+  }
+
+  // Portfolio and resume templates always have projects
   if (templateId === 'modern-portfolio' || templateId === 'creative-resume') {
     return true
   }
@@ -360,29 +519,125 @@ function validateContent(content: any, analysis: PromptAnalysis): GeneratedConte
 }
 
 /**
- * Generate minimal fallback content if AI fails
+ * Build restaurant-specific content prompt
  */
-function generateFallbackContent(analysis: PromptAnalysis): GeneratedContent {
-  return {
-    hero: {
-      title: analysis.siteName,
-      subtitle: `Professional ${analysis.industry} Services`,
-      description: analysis.description || 'Welcome to our website',
-      cta: {
-        primary: {
-          text: 'Get Started',
-          link: '#contact'
-        }
-      }
-    },
-    about: {
-      title: 'About Us',
-      description: `We are a professional ${analysis.industry.toLowerCase()} business committed to excellence.`
-    },
-    contact: {
-      email: 'contact@example.com',
-      phone: '+1 (555) 123-4567',
-      location: 'San Francisco, CA'
+function buildRestaurantContentPrompt(analysis: PromptAnalysis): string {
+  return `You are a professional restaurant marketing copywriter. Generate compelling website content for a ${analysis.tone} ${analysis.industry} restaurant.
+
+Generate content for these sections:
+
+1. hero (lowercase) - Object with:
+   - slides (array): 3 hero slides with { id, badge, title, subtitle, description, image, ctaPrimary: {text, link}, ctaSecondary: {text, link} }
+   - Use elegant, appetizing descriptions
+   - Use food images from Unsplash (e.g., "https://images.unsplash.com/photo-1504674900247-0877df9cc836")
+
+2. about (lowercase) - Object with:
+   - title (string): "About Us" or creative variant
+   - subtitle (string): Brief tagline
+   - description (string): 2-3 paragraphs about restaurant story
+   - story (string, optional): Additional history/chef info
+   - features (array): 3-4 features with { icon, title, description } - use "award", "heart", "users", "clock"
+   - images (array): 3 restaurant/food image URLs
+   - stats (array, optional): 3 stats with { number, label } like "25+ Years", "50K Happy Guests"
+
+3. menu (lowercase) - Object with:
+   - title (string): "Our Menu" or creative variant
+   - subtitle (string): Brief intro
+   - items (array): 8-12 menu items with { id, name, description, price, category, image, isSpecial, rating, tags }
+   - Categories: "appetizers", "main course", "desserts", "beverages"
+   - Prices: Format like "$24" or "$18-22"
+   - Tags: Dietary info like ["Vegetarian", "Gluten-Free", "Spicy"]
+
+4. gallery (lowercase) - Object with:
+   - title (string): "Gallery" or "Our Restaurant"
+   - subtitle (string, optional)
+   - images (array): 8-10 images with { id, src, alt, category }
+   - Categories: "Interior", "Food", "Events"
+
+5. testimonials (lowercase) - Object with:
+   - title (string): "What Our Guests Say" or similar
+   - subtitle (string, optional)
+   - items (array): 4-6 testimonials with { id, content, author, role, company, rating, image, date }
+   - Rating: 4-5 stars
+
+6. reservations (lowercase) - Object with:
+   - title (string): "Book a Table" or similar
+   - subtitle (string, optional)
+   - description (string): Brief booking instructions
+
+7. contact (lowercase) - Object with:
+   - phone (string): Restaurant phone
+   - email (string): Restaurant email
+   - address (string): Full address
+   - hours (string): Opening hours (multi-line)
+
+8. footer (lowercase) - Object with:
+   - about (object): { title, description }
+   - services (array): 4-5 services like { title, link }
+   - blog (array): 2-3 recent posts with { title, date, author, comments, link }
+
+9. social (lowercase) - Object with:
+   - facebook, instagram, twitter, youtube (URLs)
+
+CRITICAL RULES:
+1. Use lowercase keys ONLY
+2. Generate authentic ${analysis.industry} menu items (no generic items)
+3. Use realistic prices appropriate for ${analysis.tone} dining
+4. Make descriptions appetizing and elegant
+5. Use real Unsplash food/restaurant images
+6. No emojis in restaurant content (keep it elegant)
+
+Return ONLY valid JSON matching this structure.`
+}
+
+/**
+ * Validate restaurant content
+ */
+function validateRestaurantContent(content: any, analysis: PromptAnalysis): any {
+  // Ensure hero slides exist
+  if (!content.hero || !content.hero.slides) {
+    content.hero = {
+      slides: [{
+        id: '1',
+        badge: 'Welcome',
+        title: analysis.siteName,
+        subtitle: 'Fine Dining Experience',
+        description: analysis.description || 'Experience culinary excellence',
+        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836',
+        ctaPrimary: { text: 'View Menu', link: '#menu' },
+        ctaSecondary: { text: 'Book Table', link: '#reservations' }
+      }]
     }
   }
+
+  // Ensure menu exists
+  if (!content.menu || !content.menu.items || content.menu.items.length === 0) {
+    content.menu = {
+      title: 'Our Menu',
+      subtitle: 'Culinary Excellence',
+      items: [
+        {
+          id: 'item-1',
+          name: 'Signature Dish',
+          description: 'Chef\'s special creation with seasonal ingredients',
+          price: '$32',
+          category: 'main course',
+          rating: 5,
+          tags: ['Chef\'s Special']
+        }
+      ]
+    }
+  }
+
+  // Ensure contact exists
+  if (!content.contact) {
+    content.contact = {
+      phone: '+1 (555) 123-4567',
+      email: 'info@restaurant.com',
+      address: '123 Main Street, City, State 12345',
+      hours: 'Mon-Fri: 11:00 AM - 10:00 PM\nSat-Sun: 10:00 AM - 11:00 PM'
+    }
+  }
+
+  return content
 }
